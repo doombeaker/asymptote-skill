@@ -159,19 +159,39 @@ draw(unitcube, blue);
 ### Coordinate System
 ```asy
 import three;
-draw(O--2X, red, arrow=Arrow3);
-draw(O--2Y, green, arrow=Arrow3);
-draw(O--2Z, blue, arrow=Arrow3);
-label("$x$", 2X, E);
-label("$y$", 2Y, N);
-label("$z$", 2Z, N);
+
+// Axis parameters
+real axisLength = 2.0;
+
+// Draw 3D coordinate axes with colored pens
+pen xAxisPen = red;
+pen yAxisPen = green;
+pen zAxisPen = blue;
+
+draw(O--axisLength*X, xAxisPen, arrow=Arrow3);
+draw(O--axisLength*Y, yAxisPen, arrow=Arrow3);
+draw(O--axisLength*Z, zAxisPen, arrow=Arrow3);
+
+// Label axes at their endpoints
+label("$x$", axisLength*X, E);
+label("$y$", axisLength*Y, N);
+label("$z$", axisLength*Z, N);
 ```
 
 ### Parametric Curve in 3D
 ```asy
 import three;
-triple f(real t) {
-    return (cos(t), sin(t), t/2pi);
+
+// Helix parametric function
+triple helixPoint(real t) {
+    real x = cos(t);
+    real y = sin(t);
+    real z = t / (2*pi);
+    return (x, y, z);
 }
-draw(graph(f, 0, 4pi), red);
+
+// Draw one complete helix turn
+real tMin = 0;
+real tMax = 4*pi;
+draw(graph(helixPoint, tMin, tMax), red);
 ```

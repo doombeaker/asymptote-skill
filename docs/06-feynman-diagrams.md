@@ -100,23 +100,24 @@ drawMomentumArrow((0,0)--(2,0), "$p$", offset=0.2);
 ```asy
 import feynman;
 
-pair a = (0,0);
-pair b = (2,0);
-pair c = (1,1.5);
+// Vertex positions with descriptive names
+pair incomingPos = (0,0);
+pair vertexPos = (2,0);
+pair outgoingPos = (1,1.5);
 
-// Incoming fermion
-drawFermion(a--b);
+// Incoming fermion line
+drawFermion(incomingPos--vertexPos);
 
-// Photon
-drawPhoton(b--c);
+// Photon line emitted from vertex
+drawPhoton(vertexPos--outgoingPos);
 
-// Vertex
-drawVertex(b);
+// Interaction vertex
+drawVertex(vertexPos);
 
-// Labels
-label("$e^-$", a, W);
-label("$e^-$", c, N);
-label("$\\gamma$", (b+c)/2, E);
+// Particle labels
+label("$e^-$", incomingPos, W);
+label("$e^-$", outgoingPos, N);
+label("$\\gamma$", (vertexPos + outgoingPos)/2, E);
 ```
 
 ## Complete Example: QCD Gluon Exchange
@@ -124,32 +125,38 @@ label("$\\gamma$", (b+c)/2, E);
 ```asy
 import feynman;
 
+// Feynman diagram styling
 currentpen = linewidth(0.8);
 fmdefaults();
 
-pair xu = (-40,45);
-pair xl = (-40,-45);
-pair yu = (40,45);
-pair yl = (40,-45);
-pair zu = (0,5);
-pair zl = (0,-5);
+// Left-side quark positions (incoming)
+pair upperQuarkLeft = (-40,45);
+pair lowerQuarkLeft = (-40,-45);
 
-// Fermion lines
-drawFermion(xu--zu--yu);
-drawFermion(xl--zl--yl);
+// Right-side quark positions (outgoing)
+pair upperQuarkRight = (40,45);
+pair lowerQuarkRight = (40,-45);
 
-// Vertices
-drawVertexOX(zu);
-drawVertexOX(zl);
+// Interaction vertices
+pair upperVertex = (0,5);
+pair lowerVertex = (0,-5);
 
-// Gluon
+// Fermion lines for both quarks
+drawFermion(upperQuarkLeft--upperVertex--upperQuarkRight);
+drawFermion(lowerQuarkLeft--lowerVertex--lowerQuarkRight);
+
+// QCD vertices (cross style)
+drawVertexOX(upperVertex);
+drawVertexOX(lowerVertex);
+
+// Gluon exchange between vertices
 drawGluon(arc((0,0), (-20,25), (-20,-25), CW));
 
-// Labels
-label("$q$", xu, W);
-label("$q$", yu, E);
-label("$q$", xl, W);
-label("$q$", yl, E);
+// Quark labels
+label("$q$", upperQuarkLeft, W);
+label("$q$", upperQuarkRight, E);
+label("$q$", lowerQuarkLeft, W);
+label("$q$", lowerQuarkRight, E);
 ```
 
 ## Double Lines

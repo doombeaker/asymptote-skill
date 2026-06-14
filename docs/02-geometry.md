@@ -151,44 +151,94 @@ yaxis("$y$", Arrow);
 ### Triangle with Altitudes
 ```asy
 import geometry;
-pair A = (0,0), B = (4,0), C = (2,3);
-draw(A--B--C--cycle);
-pair H = orthocenter(A, B, C);
-draw(A--H, dashed);
-draw(B--foot(B, A, C), dashed);
-draw(C--foot(C, A, B), dashed);
+
+// Triangle vertices with descriptive names
+pair vertexA = (0,0);
+pair vertexB = (4,0);
+pair vertexC = (2,3);
+
+// Draw the main triangle
+triangle tri = triangle(vertexA, vertexB, vertexC);
+draw(tri);
+
+// Orthocenter and altitudes
+pair orthocenterH = orthocenter(vertexA, vertexB, vertexC);
+pair footOnAC = foot(vertexB, vertexA, vertexC);
+pair footOnAB = foot(vertexC, vertexA, vertexB);
+
+draw(vertexA--orthocenterH, dashed);
+draw(vertexB--footOnAC, dashed);
+draw(vertexC--footOnAB, dashed);
+
+// Label points for clarity
+label("$A$", vertexA, SW);
+label("$B$", vertexB, SE);
+label("$C$", vertexC, N);
+label("$H$", orthocenterH, NE);
 ```
 
 ### Circle with Tangent
 ```asy
 import geometry;
-pair O = (0,0);
-circle C = circle(O, 1);
-draw(C);
-pair P = (2, 0);
-dot("$P$", P, E);
-line[] t = tangents(P, C);
-draw(t[0]);
-line OP = line(O, P);
-pair T = intersectionpoint(OP, C);
-dot("$T$", T, NW);
+
+// Circle definition
+pair centerO = (0,0);
+real circleRadius = 1.0;
+circle unitCircle = circle(centerO, circleRadius);
+
+// External point from which tangents are drawn
+pair externalPointP = (2, 0);
+
+// Draw the circle and external point
+draw(unitCircle);
+dot("$P$", externalPointP, E);
+
+// Calculate and draw one tangent line
+line[] tangentLines = tangents(externalPointP, unitCircle);
+draw(tangentLines[0]);
+
+// Find the tangent point on the circle
+line centerToP = line(centerO, externalPointP);
+pair tangentPointT = intersectionpoint(centerToP, unitCircle);
+dot("$T$", tangentPointT, NW);
 ```
 
 ### Regular Polygon
 ```asy
-int n = 6;
-pair[] vertices;
-for(int i=0; i < n; ++i) {
-    vertices.push(rotate(360*i/n)*(1,0));
+// Configuration: number of sides and circumradius
+int numSides = 6;
+real circumradius = 1.0;
+pair center = (0,0);
+
+// Generate vertices evenly distributed around a circle
+pair[] polygonVertices;
+for (int i = 0; i < numSides; ++i) {
+    real angle = 360 * i / numSides;
+    pair vertex = rotate(angle) * (circumradius, 0);
+    polygonVertices.push(vertex);
 }
-draw(polygon(vertices), cyclic=true);
+
+// Draw the regular polygon
+draw(polygon(polygonVertices), cyclic=true);
 ```
 
 ### Venn Diagram
 ```asy
-path c1 = circle((-1,0), 1.5);
-path c2 = circle((1,0), 1.5);
-fill(c1, red+opacity(0.5));
-fill(c2, green+opacity(0.5));
-draw(c1); draw(c2);
+// Venn diagram parameters
+real circleRadius = 1.5;
+real centerOffset = 1.0;   // distance from origin to each circle center
+
+// Define two overlapping circles
+pair leftCenter = (-centerOffset, 0);
+pair rightCenter = (centerOffset, 0);
+path leftCircle = circle(leftCenter, circleRadius);
+path rightCircle = circle(rightCenter, circleRadius);
+
+// Fill with semi-transparent colors for overlap visualization
+fill(leftCircle, red + opacity(0.5));
+fill(rightCircle, green + opacity(0.5));
+
+// Draw outlines
+draw(leftCircle);
+draw(rightCircle);
 ```

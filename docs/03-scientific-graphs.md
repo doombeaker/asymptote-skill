@@ -13,14 +13,22 @@ The `graph.asy` module provides comprehensive scientific plotting capabilities.
 ```asy
 import graph;
 
+// Canvas size
 size(200,150);
 
-real f(real x) { return sin(x); }
-real g(real x) { return cos(x); }
+// Define functions with descriptive names
+real sineWave(real x) { return sin(x); }
+real cosineWave(real x) { return cos(x); }
 
-draw(graph(f, -pi, pi), red, "$\\sin x$");
-draw(graph(g, -pi, pi), blue, "$\\cos x$");
+// Plotting domain
+real xMin = -pi;
+real xMax = pi;
 
+// Draw function graphs with labels
+draw(graph(sineWave, xMin, xMax), red, "$\\sin x$");
+draw(graph(cosineWave, xMin, xMax), blue, "$\\cos x$");
+
+// Axes with arrows
 xaxis("$x$", arrow=Arrow);
 yaxis("$y$", arrow=Arrow);
 ```
@@ -48,20 +56,27 @@ xaxis("Month", Bottom, Ticks(Step=1, step=1, labels), begin=false, end=false);
 ## Data Plotting
 
 ```asy
-// From arrays
-real[] x = {1,2,3,4,5};
-real[] y = {1,4,9,16,25};
-draw(graph(x, y), red);
+// ==========================================
+// FROM ARRAYS
+// ==========================================
+real[] xValues = {1,2,3,4,5};
+real[] yValues = {1,4,9,16,25};
+draw(graph(xValues, yValues), red);
 
-// From file
-file fin = input("data.txt").line().csv();
-real[] x = fin.dimension(0,0);
-real[] y = fin.dimension(1,0);
-draw(graph(x, y));
+// ==========================================
+// FROM FILE
+// ==========================================
+file dataFile = input("data.txt").line().csv();
+real[] xFromFile = dataFile.dimension(0,0);
+real[] yFromFile = dataFile.dimension(1,0);
+draw(graph(xFromFile, yFromFile));
 
-// Scatter plot
-for(int i=0; i < x.length; ++i) {
-    dot((x[i], y[i]));
+// ==========================================
+// SCATTER PLOT
+// ==========================================
+for (int i = 0; i < xValues.length; ++i) {
+    pair dataPoint = (xValues[i], yValues[i]);
+    dot(dataPoint);
 }
 ```
 

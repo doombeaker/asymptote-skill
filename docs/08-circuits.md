@@ -100,28 +100,42 @@ void ground(pair p) {
 ```asy
 size(300,200);
 
-// Define nodes
-pair A = (0,2);
-pair B = (3,2);
-pair C = (3,0);
-pair D = (0,0);
+// ==========================================
+// NODE DEFINITIONS
+// ==========================================
+pair topLeft = (0,2);
+pair topRight = (3,2);
+pair bottomRight = (3,0);
+pair bottomLeft = (0,0);
 
-// Draw components
-draw(A--B);
-label("$R_1$", (A+B)/2, N);
+// ==========================================
+// TOP BRANCH: Resistor
+// ==========================================
+draw(topLeft--topRight);
+label("$R_1$", (topLeft + topRight)/2, N);
 
-capacitor(B, C);
-label("$C_1$", (B+C)/2, E);
+// ==========================================
+// RIGHT BRANCH: Capacitor
+// ==========================================
+capacitor(topRight, bottomRight);
+label("$C_1$", (topRight + bottomRight)/2, E);
 
-draw(C--D);
-battery(D, A);
-label("$V_{in}$", (D+A)/2, W);
+// ==========================================
+// BOTTOM BRANCH: Wire
+// ==========================================
+draw(bottomRight--bottomLeft);
 
-// Ground
-ground(C);
+// ==========================================
+// LEFT BRANCH: Battery (power source)
+// ==========================================
+battery(bottomLeft, topLeft);
+label("$V_{in}$", (bottomLeft + topLeft)/2, W);
 
-// Voltage labels
-label("$V_{out}$", B, NE);
+// ==========================================
+// GROUND AND OUTPUT LABELS
+// ==========================================
+ground(bottomRight);
+label("$V_{out}$", topRight, NE);
 ```
 
 ## Operational Amplifier
@@ -147,17 +161,23 @@ void opamp(pair center, real scale=1) {
 
 ```asy
 // Use a grid for consistent spacing
-real dx = 1.5;  // horizontal spacing
-real dy = 1.5;  // vertical spacing
+real gridSpacingX = 1.5;   // horizontal spacing between nodes
+real gridSpacingY = 1.5;   // vertical spacing between nodes
 
-pair node(int i, int j) {
-    return (i*dx, j*dy);
+// Helper function to compute grid node positions
+pair gridNode(int col, int row) {
+    return (col * gridSpacingX, row * gridSpacingY);
 }
 
-// Place components on grid
-draw(node(0,1)--node(1,1));
-resistor(node(1,1), node(2,1));
-draw(node(2,1)--node(3,1));
+// Place components on the grid using named positions
+pair nodeStart = gridNode(0,1);
+pair nodeBeforeResistor = gridNode(1,1);
+pair nodeAfterResistor = gridNode(2,1);
+pair nodeEnd = gridNode(3,1);
+
+draw(nodeStart--nodeBeforeResistor);
+resistor(nodeBeforeResistor, nodeAfterResistor);
+draw(nodeAfterResistor--nodeEnd);
 ```
 
 ## Tips for Circuit Diagrams
