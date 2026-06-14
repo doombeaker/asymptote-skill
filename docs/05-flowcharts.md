@@ -156,3 +156,61 @@ add(new void(picture pic, transform t) {
 3. The `blockconnector` operator `--` handles automatic routing
 4. Labels on connections use `Label("text", align=Direction)`
 5. Orthogonal routing with `Up`, `Down`, `Left`, `Right`
+
+## Aesthetic Best Practices
+
+### Keep Blocks Minimal
+
+**Flowchart blocks should contain only keywords** — brief labels of 1-3 words maximum. This ensures readability and prevents blocks from becoming oversized or text from overflowing.
+
+**Good example:**
+```asy
+block init = rectangle("Init", (0,0));
+block process = rectangle("Process", (0,-2));
+block check = diamond("Valid?", (0,-4));
+```
+
+**Bad example (too much text in blocks):**
+```asy
+// AVOID: Blocks with long descriptions
+block bad = rectangle("Initialize all variables and set default values", (0,0));
+```
+
+### Handle Detailed Explanations Separately
+
+When a step requires detailed explanation that won't fit cleanly in a block:
+
+1. **Use a keyword in the block** — keep the diagram clean
+2. **Add a separate legend or annotation area** — place detailed explanations in a text box or table outside the main flowchart
+
+```asy
+size(400,300);
+import flowchart;
+
+// Main flowchart with minimal keywords
+block start = roundrectangle("Start", (0,0));
+block load = rectangle("Load Data", (0,-2));
+block validate = diamond("Valid?", (0,-4));
+block process = rectangle("Process", (0,-6));
+block end = roundrectangle("End", (0,-8));
+
+draw(start); draw(load); draw(validate); draw(process); draw(end);
+
+add(new void(picture pic, transform t) {
+    blockconnector operator --=blockconnector(pic,t);
+    start--Arrow--load--Arrow--validate;
+    validate--Label("Yes")--Arrow--process--Arrow--end;
+    validate--Label("No", align=E)--Arrow--block(2,-4);
+});
+
+// Separate legend/annotation area on the right
+label("\textbf{Legend:}", (4,0), W);
+label("Load Data: Read CSV file", (4,-0.8), W, fontsize(9pt));
+label("Process: Filter, transform, save", (4,-1.6), W, fontsize(9pt));
+```
+
+### Spacing and Alignment
+
+- Maintain consistent spacing between blocks (typically 1.5-2x block height)
+- Align related blocks horizontally or vertically for visual flow
+- Use `minblockwidth` and `minblockheight` to enforce uniform block sizes

@@ -82,9 +82,17 @@ Asymptote supports multiple output formats:
 
 ## Important Conventions
 
-1. **Coordinates**: Default in PostScript bp (1/72 inch). Use `unitsize(1cm)` for metric.
-2. **Paths**: `--` for straight line, `..` for Bezier spline, `cycle` to close.
-3. **Labels**: Double-quoted LaTeX strings: `label("$E=mc^2$", (0,0), N);`
-4. **Pens**: Control color, line width, dash pattern: `red+linewidth(1)+dashed`
-5. **Transforms**: `shift`, `scale`, `rotate`, `reflect`, `xscale`, `yscale`
-6. **Arrowheads**: `Arrow`, `Arrows`, `MidArrow`, with optional `arrowhead=` parameter
+1. **Language**: **ALL output must be in English only.** Asymptote has poor support for CJK (Chinese, Japanese, Korean) characters and Unicode. Use English labels, comments, and variable names exclusively.
+2. **Coordinates**: Default in PostScript bp (1/72 inch). Use `unitsize(1cm)` for metric.
+3. **Paths**: `--` for straight line, `..` for Bezier spline, `cycle` to close.
+4. **Labels**: Double-quoted LaTeX strings: `label("$E=mc^2$", (0,0), N);`
+5. **Pens**: Control color, line width, dash pattern: `red+linewidth(1)+dashed`
+6. **Transforms**: `shift`, `scale`, `rotate`, `reflect`, `xscale`, `yscale`
+7. **Arrowheads**: `Arrow`, `Arrows`, `MidArrow`, with optional `arrowhead=` parameter
+
+## Aesthetic Guidelines
+
+- **Keep diagrams clean and minimal**: Avoid cluttering elements with excessive text.
+- **Flowchart blocks should contain only keywords**: Each block should hold a brief keyword or short phrase (1-3 words). If detailed explanation is needed, place it in a separate text area or caption outside the diagram, not inside the blocks.
+- **Use whitespace effectively**: Ensure adequate spacing between elements for readability.
+- **Consistent styling**: Maintain uniform colors, line widths, and font sizes throughout a single diagram.

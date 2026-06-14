@@ -2,3 +2,5 @@ base/
 doc/
 examples/
 .sisyphus/
+.opencode/
+*.asy
