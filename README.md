@@ -1,12 +1,12 @@
 # Asymptote Vector Graphics Skill
 
-This directory contains an OpenCode agent skill for generating technical vector graphics using the Asymptote language.
+This is an OpenCode agent skill for generating technical vector graphics using the Asymptote language.
 
 ## Structure
 
 ```
-asymptote/
 ├── SKILL.md              # Main skill definition
+├── README.md             # This file
 ├── docs/                 # Knowledge base documentation
 │   ├── 01-basics.md
 │   ├── 02-geometry.md
@@ -44,16 +44,38 @@ asymptote/
 - **Animations**: Frame-based animation generation
 - **Engineering/CAD**: Technical drawings with ISO standard line types
 
+## Installation
+
+### For Users
+
+Clone this repository into your OpenCode skills directory:
+
+```bash
+# Global installation (available in all projects)
+git clone https://github.com/doombeaker/asymptote-skill.git \
+  ~/.config/opencode/skills/asymptote
+
+# Or project-local installation (only for current project)
+git clone https://github.com/doombeaker/asymptote-skill.git \
+  .opencode/skills/asymptote
+```
+
+Then the agent can load it on demand by calling:
+
+```
+skill({ name: "asymptote" })
+```
+
+### For Contributors
+
+```bash
+git clone https://github.com/doombeaker/asymptote-skill.git
+cd asymptote-skill
+```
+
 ## Usage
 
 The skill is loaded automatically by OpenCode when working with Asymptote-related tasks. The main `SKILL.md` provides the entry point, with detailed documentation in the `docs/` directory and reusable code in `templates/`.
-
-## Reference Materials
-
-This skill is based on:
-- Asymptote official user manual (`asymptote.markdown`)
-- Asymptote standard library (`base/`)
-- Asymptote official examples (`examples/`)
 
 ## License
 
