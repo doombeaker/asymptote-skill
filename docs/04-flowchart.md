@@ -121,6 +121,20 @@ void arrCurve(pair from, pair to, real bend, pen p) {
 
 **Why `Arrow(TeXHead)`?** It produces clean, small arrowheads that don't overwhelm the diagram. The default `Arrow` can be too large and intrusive.
 
+**When to use straight vs. curved arrows:**
+
+| Scenario | Use | Rationale |
+|---------|-----|-----------|
+| Simple top-down flow (parent → child directly below) | **Straight** | Clean, reads naturally as "next step" |
+| Short horizontal link (sibling nodes at same y-level) | **Straight** or **subtle curve** | Direct relationship, no ambiguity |
+| Cross-layer connection (node A at row 2 → node B at row 4, offset horizontally) | **Curve** | Avoids cutting through intermediate rows |
+| Two parallel branches merging to a single node below | **Curved** (outward then inward) | Prevents crossing, visually separates incoming flows |
+| One node branching to two side nodes | **Curved** (fork shape) | Distributes arrows cleanly without overlap |
+| Long-distance jump or feedback loop | **Curved** (wide arc) | Signals "绕行" or non-local relationship |
+| Reverse-direction flow (right node → left node) | **Curved** (S-shape) | Avoids head-on collision with main flow |
+
+**Rule of thumb:** If a straight arrow would pass through another node, cross another arrow, or create visual confusion → use a curve. Straight arrows are for "obvious next step"; curves are for "绕行 to avoid obstacles".
+
 ### 3.3 Cluster / Group Box
 
 A large rectangle that encloses related components, with a label at the bottom or top.
