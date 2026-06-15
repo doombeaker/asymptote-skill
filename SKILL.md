@@ -21,7 +21,7 @@ This skill enables the agent to generate high-quality technical vector graphics 
 
 ## Skill Structure
 
-This skill is organized into documentation files covering the core capabilities:
+This skill is organized into documentation files and ready-to-use templates:
 
 | File | Content |
 |------|---------|
@@ -29,6 +29,27 @@ This skill is organized into documentation files covering the core capabilities:
 | `docs/02-geometry.md` | 2D geometric constructions using the `geometry` module |
 | `docs/03-scientific-graphs.md` | Scientific plotting with the `graph` module and `colormap` |
 | `docs/04-flowchart.md` | Flowchart construction using default Asymptote primitives |
+| `templates/` | Ready-to-use templates for common drawing types (see list below) |
+
+### Templates
+
+The `templates/` directory contains production-ready Asymptote files that demonstrate best practices:
+
+**2D Geometric Drawings:**
+- `geometric_unit_circle.asy` — Unit circle with angle annotation and sector fill
+- `geometric_theorem.asy` — Pythagorean theorem visualization with squares and labels
+- `geometric_circumcircle.asy` — Triangle circumcircle construction
+- `geometric_venn.asy` — Two-set Venn diagram with overlap coloring
+
+**Scientific Graphs:**
+- `scientific_function_plot.asy` — Function plot with axes, ticks, and labels
+- `scientific_polar_plot.asy` — Polar plot with filled sector and radial lines
+- `scientific_complex_function.asy` — Discontinuous function (Gamma) with branch handling
+
+**Flowcharts:**
+- `minimal_flowchart.asy` — Simple vertical flowchart (5 nodes or fewer)
+- `modular_flowchart.asy` — Modular flowchart with parallel branches and curved arrows
+- `system_diagram.asy` — System architecture with clusters and hierarchical layout
 
 ## How to Use
 

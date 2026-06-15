@@ -22,6 +22,11 @@ Asymptote is a powerful descriptive vector graphics language that provides a mat
 │   ├── 02-geometry.md    # 2D geometric constructions using the geometry module
 │   ├── 03-scientific-graphs.md  # Scientific plotting with graph and colormap modules
 │   └── 04-flowchart.md   # Flowchart construction using default primitives
+├── templates/            # Ready-to-use Asymptote templates
+│   ├── geometric_*.asy   # 2D geometric drawing templates
+│   ├── scientific_*.asy  # Scientific graph templates
+│   ├── *_flowchart.asy  # Flowchart templates
+│   └── *_diagram.asy    # System architecture templates
 └── vendor/               # Reference source files
     ├── asymptote.texi    # Asymptote user manual
     ├── geometry.asy      # Geometry module source
