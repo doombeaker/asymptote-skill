@@ -5,4 +5,8 @@ examples/
 .opencode/
 .omo/
 vendor/
-*.asy
+examples/
+templates/*.pdf
+templates/*.svg
+templates/*.png
+templates/*.eps
