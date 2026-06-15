@@ -17,12 +17,37 @@ Key principles:
 - **Grouping shows hierarchy** — clusters, layers, or logical boundaries
 - **Color encodes role** — different colors for different types of entities
 - **Minimal text in nodes** — name + one-line description; details go in captions
+- **Precise coordinate calculation** — Asymptote's strength is exact positioning. Use variables and arithmetic to compute every coordinate, rather than relying on margin/heuristic parameters.
 
 ---
 
-## 2. Core Building Blocks
+## 2. Configuration Pattern
 
-### 2.1 Component Box (The Basic Node)
+All diagram parameters should be defined at the top as named constants. This makes the diagram easy to adjust and ensures consistency.
+
+```asy
+unitsize(1.0cm);       // Set the base unit for the diagram
+
+// Coordinate system anchors
+real xMain    = 0;      // Center column x-coordinate
+real xLeft    = -4.5;   // Left annotation column
+real xRight   = 4.5;    // Right annotation column
+real yTop     = 10;     // Top of the diagram
+
+// Spacing
+real dy       = 1.5;    // Vertical step between nodes
+real bw       = 3.0;    // Box width
+real bh       = 0.9;    // Box height
+real gap      = 0.2;    // Gap between box and arrow
+```
+
+**Key insight:** By defining `bw` (box width) and `bh` (box height) once, all helper functions can compute exact coordinates. No magic numbers repeated throughout the code.
+
+---
+
+## 3. Core Building Blocks
+
+### 3.1 Component Box (The Basic Node)
 
 The fundamental unit. A rectangle with a name and optional subtitle.
 
@@ -30,28 +55,73 @@ The fundamental unit. A rectangle with a name and optional subtitle.
 // ==========================================
 // COMPONENT BOX
 // ==========================================
-real boxWidth = 3.0;
-real boxHeight = 1.2;
-
-path componentBox(pair c, real w, real h) {
-    return box(c + (-w/2, -h/2), c + (w/2, h/2));
+void boxLabel(pair c, string[] lines, pen fillpen, pen borderpen) {
+    pair bl = c + (-bw/2, -bh/2);   // bottom-left corner
+    pair tr = c + (bw/2, bh/2);     // top-right corner
+    fill(box(bl, tr), fillpen);
+    draw(box(bl, tr), borderpen);
+    real lineDy = 0.32;              // line spacing inside box
+    real y0 = c.y + (lines.length - 1) * lineDy / 2;
+    for (int i = 0; i < lines.length; ++i)
+        label(lines[i], (c.x, y0 - i * lineDy), fontsize(9pt));
 }
 
-// Draw a component with name + subtitle
-void drawComponent(pair pos, string name, string desc="",
-                   pen fillPen=lightyellow, pen borderPen=black+linewidth(1)) {
-    path p = componentBox(pos, boxWidth, boxHeight);
-    filldraw(p, fillPen, borderPen);
-    if (desc == "") {
-        label(name, pos);
-    } else {
-        label(name, pos + (0, 0.15));
-        label("\small " + desc, pos + (0, -0.25), gray(0.3));
-    }
+// Single-line overload
+void boxLabel(pair c, string text, pen fillpen, pen borderpen) {
+    string[] lines = {text};
+    boxLabel(c, lines, fillpen, borderpen);
 }
 ```
 
-### 2.2 Cluster / Group Box
+**Usage:**
+
+```asy
+pen userFill    = rgb(0.85, 0.92, 1.0);
+pen userBorder  = rgb(0.2, 0.4, 0.6) + linewidth(1.2);
+
+boxLabel((0, 0), "SCX Gateway", userFill, userBorder);
+boxLabel((0, 0), new string[]{"SCX Gateway", "Auth, Quota, Billing"}, userFill, userBorder);
+```
+
+### 3.2 Precise Arrow Functions
+
+**Never use `margin=EndMargin` or similar heuristic parameters.** Instead, compute the exact start and end points using box dimensions and the `gap` constant.
+
+```asy
+// ==========================================
+// ARROW HELPERS — Precise coordinate calculation
+// ==========================================
+
+// Vertical arrow: connects bottom of topBox to top of botBox
+void arrV(pair topBox, pair botBox, pen p) {
+    pair start = (topBox.x, topBox.y - bh/2 - gap);
+    pair end   = (botBox.x, botBox.y + bh/2 + gap);
+    draw(start -- end, arrow = Arrow(TeXHead), p);
+}
+
+// Horizontal arrow: connects right of leftBox to left of rightBox
+void arrH(pair leftBox, pair rightBox, pen p) {
+    pair start = (leftBox.x + bw/2 + gap, leftBox.y);
+    pair end   = (rightBox.x - bw/2 - gap, rightBox.y);
+    draw(start -- end, arrow = Arrow(TeXHead), p);
+}
+
+// Orthogonal merge: side branch back to main flow
+void arrMerge(pair sideBox, pair mainBox, pen p) {
+    pair a = (sideBox.x, sideBox.y - bh/2 - gap);
+    pair b = (mainBox.x - bw/2 - gap, mainBox.y);
+    draw(a -- (a.x, b.y) -- b, arrow = Arrow(TeXHead), p);
+}
+
+// Curved arrow (for crossing routes or long jumps)
+void arrCurve(pair from, pair to, real bend, pen p) {
+    draw(from{right}..{right}to, arrow = Arrow(TeXHead), p);
+}
+```
+
+**Why `Arrow(TeXHead)`?** It produces clean, small arrowheads that don't overwhelm the diagram. The default `Arrow` can be too large and intrusive.
+
+### 3.3 Cluster / Group Box
 
 A large rectangle that encloses related components, with a label at the bottom or top.
 
@@ -60,92 +130,72 @@ A large rectangle that encloses related components, with a label at the bottom o
 // CLUSTER BOX
 // ==========================================
 void drawCluster(pair min, pair max, string label,
-                 pen fillPen=rgb(0.96,0.96,1.0),
-                 pen borderPen=rgb(0.3,0.3,0.6)+linewidth(1.5)) {
+                 pen fillPen = rgb(0.96, 0.96, 1.0),
+                 pen borderPen = rgb(0.3, 0.3, 0.6) + linewidth(1.5)) {
     path p = box(min, max);
     filldraw(p, fillPen, borderPen);
-    // Label at bottom center
-    label(label, ((min.x+max.x)/2, min.y - 0.3), borderPen);
+    label(label, ((min.x + max.x)/2, min.y - 0.4), borderPen);
 }
 
 // Dashed logical group (no fill)
-void drawDashedGroup(pair min, pair max, string label="") {
+void drawDashedGroup(pair min, pair max, string label = "") {
     path p = box(min, max);
     draw(p, gray(0.5) + dashed + linewidth(1));
     if (label != "") {
-        label("\small " + label, ((min.x+max.x)/2, max.y + 0.3), gray(0.5));
+        label("\small " + label, ((min.x + max.x)/2, max.y + 0.3), gray(0.5));
     }
 }
 ```
 
-### 2.3 Layer Annotation
+### 3.4 Picture-Based Modular Composition (Advanced)
 
-Horizontal bands that indicate architectural layers (e.g., Frontend, Gateway, Core, Storage).
+For diagrams with **more than 5 nodes**, parallel branches, or multi-level layouts, the `pair`-coordinate approach becomes fragile. When you move one node, you must manually update all arrows and annotations tied to it.
 
-```asy
-// ==========================================
-// LAYER LABELS
-// ==========================================
-void drawLayerLabel(real y, string name, string subtitle="") {
-    label("\small \textbf{" + name + "}", (-6, y), W, gray(0.4));
-    if (subtitle != "") {
-        label("\scriptsize " + subtitle, (-6, y - 0.4), W, gray(0.5));
-    }
-    // Light gray horizontal line spanning the diagram width
-    draw((-5.5, y-0.6)--(8, y-0.6), gray(0.8)+linewidth(0.5));
-}
-```
+Asymptote's `picture` type solves this by embedding position information into the node itself. Once placed, you query its absolute anchor points (`N`, `S`, `E`, `W`, `NE`, etc.) to draw arrows and labels. This mirrors the pattern used in `examples/long_timeline.asy`.
 
----
+**When to use which approach:**
 
-## 3. Arrows and Connectors
+| Diagram size | Approach | Rationale |
+|-------------|----------|-----------|
+| ≤ 5 nodes | `pair` + `boxLabel()` | Less boilerplate, quick to write |
+| > 5 nodes, parallel branches, clusters | `picture` + `add()` | Nodes self-contained; arrows auto-follow |
 
-System diagrams use diverse arrow styles to convey different relationship types.
-
-### 3.1 Arrow Style Reference
+**Core idea:**
 
 ```asy
-// ==========================================
-// ARROW STYLES
-// ==========================================
-
-// Standard data flow (solid)
-pen solidArrow = rgb(0.2,0.2,0.2) + linewidth(1.2);
-
-// Internal/dispatch flow (dashed)
-pen dashedArrow = gray(0.5) + dashed + linewidth(1);
-
-// Return/feedback flow (dotted or different color)
-pen returnArrow = rgb(0.4,0.4,0.6) + linewidth(1);
-
-// Curved arrow (for crossing routes)
-path curvedArrow(pair a, pair b, real bend=1.5) {
-    pair mid = (a + b) / 2;
-    pair perp = rotate(90) * unit(b - a);
-    return a..controls (mid + bend*perp)..b;
+// 1. Build a node as a picture centered at (0,0)
+picture makeNode(string text, pen fillpen, pen borderpen) {
+    picture pic;
+    pair bl = (-bw/2, -bh/2);
+    pair tr = ( bw/2,  bh/2);
+    fill(pic, box(bl, tr), fillpen);
+    draw(pic, box(bl, tr), borderpen);
+    label(pic, text, fontsize(9pt));
+    return pic;
 }
 
-// Bidirectional arrow
-draw(a--b, arrow=Arrows);
+// 2. Place it by baking shift into the picture itself
+picture nodeA = shift(0,  0) * makeNode("Start", doneFill, doneBorder);
+picture nodeB = shift(0, -2) * makeNode("Process", cookFill, cookBorder);
 
-// Orthogonal routing (horizontal then vertical)
-path ortho(pair a, pair b) {
-    return a--(b.x, a.y)--b;
-}
+// 3. Add to a parent picture
+picture diagram;
+add(diagram, nodeA);
+add(diagram, nodeB);
+
+// 4. Draw arrows using the picture's absolute anchor points
+draw(diagram, point(nodeA, S) -- point(nodeB, N),
+     arrow = Arrow(TeXHead));
+
+// 5. Center and ship
+diagram = shift(-min(diagram, true)) * diagram;
+add(diagram);
 ```
 
-### 3.2 Drawing Arrows with Labels
-
-```asy
-// Arrow with inline label
-draw(a--b, solidArrow, arrow=Arrow);
-label("\small Request", (a+b)/2, N);
-
-// Curved arrow with label
-path c = curvedArrow(a, b, 1.0);
-draw(c, solidArrow, arrow=Arrow);
-label("\small Dispatch", midpoint(c), NE);
-```
+**Key advantages:**
+- `point(node, S)` returns the absolute south edge after `shift` — no manual `bh/2` math
+- Moving a node only requires changing one `shift(x,y)` call; arrows and labels follow automatically
+- Parallel nodes at the same y-level no longer cause annotation overlap (offset with `±dy`)
 
 ---
 
@@ -165,108 +215,90 @@ Use color to distinguish entity roles at a glance.
 
 ```asy
 // ==========================================
-// COLOR PALETTE
+// COLOR PALETTE — Define once, use everywhere
 // ==========================================
 pen userFill     = rgb(0.85, 0.92, 1.0);
-pen userBorder   = rgb(0.2, 0.4, 0.6) + linewidth(1);
+pen userBorder   = rgb(0.2, 0.4, 0.6) + linewidth(1.2);
 pen gatewayFill  = rgb(1.0, 0.95, 0.85);
-pen gatewayBorder= rgb(0.5, 0.35, 0.15) + linewidth(1);
+pen gatewayBorder= rgb(0.5, 0.35, 0.15) + linewidth(1.2);
 pen routerFill   = rgb(0.85, 1.0, 0.9);
-pen routerBorder = rgb(0.15, 0.45, 0.3) + linewidth(1);
+pen routerBorder = rgb(0.15, 0.45, 0.3) + linewidth(1.2);
 pen workerFill   = rgb(1.0, 0.95, 0.8);
-pen workerBorder = rgb(0.5, 0.4, 0.15) + linewidth(1);
-pen storageFill  = rgb(0.95, 0.9, 0.95);
-pen storageBorder= rgb(0.4, 0.3, 0.5) + linewidth(1);
+pen workerBorder = rgb(0.5, 0.4, 0.15) + linewidth(1.2);
 pen resultFill   = rgb(0.9, 1.0, 0.95);
-pen resultBorder = rgb(0.2, 0.5, 0.4) + linewidth(1);
-pen clusterFill  = rgb(0.96, 0.96, 1.0);
-pen clusterBorder= rgb(0.3, 0.3, 0.6) + linewidth(1.5);
+pen resultBorder = rgb(0.2, 0.5, 0.4) + linewidth(1.2);
 ```
 
 ---
 
 ## 5. Layout Patterns
 
-### 5.1 Horizontal Pipeline (Left to Right)
+### 5.1 Vertical Timeline (Top to Bottom)
+
+For sequential workflows with parallel branches.
+
+```asy
+// ==========================================
+// VERTICAL WORKFLOW WITH PARALLEL BRANCHES
+// ==========================================
+unitsize(1.0cm);
+
+real xMain = 0, xLeft = -4.5, xRight = 4.5;
+real yTop = 10, dy = 1.5;
+real bw = 3.0, bh = 0.9, gap = 0.2;
+
+// Define colors...
+
+// Node positions
+pair pStart = (xMain, yTop);
+pair pPrep  = (xMain, yTop - dy);
+pair pCut   = (xMain - 3.0, yTop - 2*dy);   // left branch
+pair pBeat  = (xMain + 3.0, yTop - 2*dy);   // right branch
+pair pCook  = (xMain, yTop - 3*dy);
+// ...etc
+
+// Draw nodes
+boxLabel(pStart, "Start", doneFill, doneBorder);
+boxLabel(pPrep, new string[]{"Prep", "wash & measure"}, prepFill, prepBorder);
+boxLabel(pCut, "Cut", prepFill, prepBorder);
+boxLabel(pBeat, "Beat", prepFill, prepBorder);
+boxLabel(pCook, "Cook", cookFill, cookBorder);
+
+// Draw arrows (precise endpoints)
+arrV(pStart, pPrep, arrowPen);
+arrH(pPrep, pCut, arrowPen);
+arrH(pPrep, pBeat, arrowPen);
+arrMerge(pCut, pCook, arrowPen);
+arrMerge(pBeat, pCook, arrowPen);
+```
+
+### 5.2 Horizontal Pipeline (Left to Right)
 
 For sequential data flow: ingest → process → output.
 
 ```asy
 // ==========================================
-// PIPELINE LAYOUT
+// HORIZONTAL PIPELINE
 // ==========================================
-size(400, 150);
+unitsize(1.1cm);
 
-real bw = 2.8;
-real bh = 1.0;
-real hGap = 3.5;
+real yMain = 0;
+real dx = 4.5;
+real xStart = -8;
 
-pair pIngest  = (0, 0);
-pair pProcess = (hGap, 0);
-pair pStore   = (2*hGap, 0);
-pair pServe   = (3*hGap, 0);
+pair pUser    = (xStart, yMain);
+pair pGateway = (xStart + dx, yMain);
+pair pCore    = (xStart + 2*dx, yMain);
+pair pResult  = (xStart + 3*dx, yMain);
 
-// Draw nodes
-filldraw(componentBox(pIngest, bw, bh), userFill, userBorder);
-label("Ingest", pIngest);
+boxLabel(pUser, "User", userFill, userBorder);
+boxLabel(pGateway, "Gateway", gatewayFill, gatewayBorder);
+boxLabel(pCore, "Core", workerFill, workerBorder);
+boxLabel(pResult, "Result", resultFill, resultBorder);
 
-filldraw(componentBox(pProcess, bw, bh), workerFill, workerBorder);
-label("Process", pProcess);
-
-filldraw(componentBox(pStore, bw, bh), storageFill, storageBorder);
-label("Store", pStore);
-
-filldraw(componentBox(pServe, bw, bh), resultFill, resultBorder);
-label("Serve", pServe);
-
-// Draw arrows
-draw(pIngest--pProcess, solidArrow, arrow=Arrow);
-draw(pProcess--pStore, solidArrow, arrow=Arrow);
-draw(pStore--pServe, solidArrow, arrow=Arrow);
-```
-
-### 5.2 Layered Architecture (Top to Bottom)
-
-For hierarchical systems: client → gateway → core → storage.
-
-```asy
-// ==========================================
-// LAYERED ARCHITECTURE
-// ==========================================
-size(400, 400);
-
-real bw = 3.0;
-real bh = 1.0;
-real vGap = 2.5;
-
-pair pClient  = (0, 0);
-pair pGateway = (0, -vGap);
-pair pCore    = (0, -2*vGap);
-pair pStorage = (0, -3*vGap);
-
-// Layer labels on the left
-drawLayerLabel(0, "Client", "Frontend");
-drawLayerLabel(-vGap, "Gateway", "Auth, Quota");
-drawLayerLabel(-2*vGap, "Core", "Business Logic");
-drawLayerLabel(-3*vGap, "Storage", "Persistence");
-
-// Draw nodes
-filldraw(componentBox(pClient, bw, bh), userFill, userBorder);
-label("Client", pClient);
-
-filldraw(componentBox(pGateway, bw, bh), gatewayFill, gatewayBorder);
-label("API Gateway", pGateway);
-
-filldraw(componentBox(pCore, bw, bh), workerFill, workerBorder);
-label("Core Service", pCore);
-
-filldraw(componentBox(pStorage, bw, bh), storageFill, storageBorder);
-label("Database", pStorage);
-
-// Arrows
-draw(pClient--pGateway, solidArrow, arrow=Arrow);
-draw(pGateway--pCore, solidArrow, arrow=Arrow);
-draw(pCore--pStorage, solidArrow, arrow=Arrow);
+arrH(pUser, pGateway, arrowPen);
+arrH(pGateway, pCore, arrowPen);
+arrH(pCore, pResult, arrowPen);
 ```
 
 ### 5.3 Cluster with Internal Dispatch
@@ -277,166 +309,82 @@ For systems with a router dispatching to multiple workers inside a cluster.
 // ==========================================
 // CLUSTER WITH DISPATCH
 // ==========================================
-size(500, 250);
 
 // Cluster bounding box
-pair clusterMin = (-2, -3.5);
-pair clusterMax = (8, 0.5);
-drawCluster(clusterMin, clusterMax, "Inference Cluster", clusterFill, clusterBorder);
+pair cbl = (1.5, -3.5);
+pair ctr = (9.5, 0.5);
+drawCluster(cbl, ctr, "Inference Cluster", clusterFill, clusterBorder);
 
 // Router at top center of cluster
-pair pRouter = (3, -0.5);
-filldraw(componentBox(pRouter, 2.5, 0.9), routerFill, routerBorder);
-label("Router", pRouter);
+pair pRouter = (5.5, -0.5);
+boxLabel(pRouter, new string[]{"Router", "Unique Instance"}, routerFill, routerBorder);
 
 // Worker pods below
-real podY = -2.5;
-real podGap = 2.5;
-pair pPod1 = (0.5, podY);
-pair pPod2 = (3.0, podY);
-pair pPod3 = (5.5, podY);
+pair pPod1 = (3.0, -2.5);
+pair pPod2 = (5.5, -2.5);
+pair pPod3 = (8.0, -2.5);
 
-filldraw(componentBox(pPod1, 2.0, 0.8), workerFill, workerBorder);
-label("\small Pod 1", pPod1);
-
-filldraw(componentBox(pPod2, 2.0, 0.8), workerFill, workerBorder);
-label("\small Pod 2", pPod2);
-
-filldraw(componentBox(pPod3, 2.0, 0.8), workerFill, workerBorder);
-label("\small Pod N", pPod3);
+boxLabel(pPod1, new string[]{"Pod 1", "Agent + UI"}, workerFill, workerBorder);
+boxLabel(pPod2, new string[]{"Pod 2", "Agent + UI"}, workerFill, workerBorder);
+boxLabel(pPod3, new string[]{"Pod N", "Agent + UI"}, workerFill, workerBorder);
 
 // Dashed dispatch lines from router to pods
+pen dispatchPen = gray + linewidth(0.7) + dashed;
+pair cgrBot = (pRouter.x, pRouter.y - bh/2 - gap);
+
 for (pair pod : new pair[] {pPod1, pPod2, pPod3}) {
-    draw(pRouter--(pRouter.x, pod.y+0.5)--pod,
-         gray(0.5) + dashed + linewidth(0.8),
-         arrow=Arrow);
+    pair podTop = (pod.x, pod.y + bh/2 + gap);
+    draw(cgrBot -- (cgrBot.x, cgrBot.y - 0.8) -- (podTop.x, cgrBot.y - 0.8) -- podTop,
+         dispatchPen);
 }
-
-// External input to router
-pair pGateway = (-4.5, -0.5);
-filldraw(componentBox(pGateway, 2.5, 0.9), gatewayFill, gatewayBorder);
-label("Gateway", pGateway);
-
-draw(pGateway--pRouter, solidArrow, arrow=Arrow);
-```
-
-### 5.4 Parallel Branches with Merge
-
-For tasks that split into parallel paths and later merge.
-
-```asy
-// ==========================================
-// PARALLEL BRANCHES
-// ==========================================
-size(400, 200);
-
-pair pStart  = (0, 0);
-pair pTaskA  = (-2, -2);
-pair pTaskB  = (2, -2);
-pair pMerge  = (0, -4);
-
-filldraw(componentBox(pStart, 2.0, 0.8), routerFill, routerBorder);
-label("Split", pStart);
-
-filldraw(componentBox(pTaskA, 2.2, 0.8), workerFill, workerBorder);
-label("Task A", pTaskA);
-
-filldraw(componentBox(pTaskB, 2.2, 0.8), workerFill, workerBorder);
-label("Task B", pTaskB);
-
-filldraw(componentBox(pMerge, 2.0, 0.8), resultFill, resultBorder);
-label("Merge", pMerge);
-
-// Arrows
-draw(pStart--pTaskA, solidArrow, arrow=Arrow);
-draw(pStart--pTaskB, solidArrow, arrow=Arrow);
-draw(pTaskA--(pTaskA.x, pMerge.y)--pMerge, solidArrow, arrow=Arrow);
-draw(pTaskB--(pTaskB.x, pMerge.y)--pMerge, solidArrow, arrow=Arrow);
 ```
 
 ---
 
-## 6. Advanced Techniques
+## 6. Annotations
 
-### 6.1 Curved Arrows for Crossing Routes
+### 6.1 Layer Labels (Top)
 
-When straight arrows would cross, use curves.
+For complex systems, add layer annotations on the left so readers know which architectural level they're viewing.
 
 ```asy
-// ==========================================
-// CURVED ARROW
-// ==========================================
-pair a = (0, 0);
-pair b = (4, 0);
+label("Web Canvas",  (xLeft, pUser.y + 1.5), fontsize(8pt));
+label("Frontend",    (xLeft, pUser.y + 1.1), fontsize(7pt) + gray);
 
-// Arc upward
-draw(a{up}..{up}b, solidArrow, arrow=Arrow);
+label("Permission",  (xLeft, pGateway.y + 1.5), fontsize(8pt));
+label("Gateway",     (xLeft, pGateway.y + 1.1), fontsize(7pt) + gray);
 
-// Or explicit control points
-path c = a..controls (2, 1.5)..b;
-draw(c, solidArrow, arrow=Arrow);
+label("Cluster",     (xLeft, pRouter.y + 1.5), fontsize(8pt));
+label("Router",      (xLeft, pRouter.y + 1.1), fontsize(7pt) + gray);
 ```
 
-### 6.2 Step Numbering at Bottom
+### 6.2 Step Numbering (Bottom)
 
 For complex diagrams, add numbered steps below the diagram.
 
 ```asy
-// ==========================================
-// STEP NUMBERING
-// ==========================================
-string[] steps = {
-    "1. Authenticate",
-    "2. Route",
-    "3. Dispatch",
-    "4. Process",
-    "5. Merge"
-};
-
-real stepY = -5.5;
-real stepGap = 2.8;
-for (int i = 0; i < steps.length; ++i) {
-    label("\small " + steps[i], (-4 + i*stepGap, stepY), gray(0.4));
-}
+real ySteps = yBot - 2.5;
+label("1. Send",     (pUser.x, ySteps), fontsize(8pt));
+label("2. Auth",     (pGateway.x, ySteps), fontsize(8pt));
+label("3. Route",    (pRouter.x, ySteps), fontsize(8pt));
+label("4. Dispatch", (pRouter.x, ySteps - 0.5), fontsize(8pt));
+label("5. Parallel", (pPod2.x, ySteps), fontsize(8pt));
+label("6. Merge",    (pResult.x, ySteps), fontsize(8pt));
 
 // Dashed line above steps
-draw((-5, stepY+0.5)--(12, stepY+0.5), gray(0.7)+dashed+linewidth(0.5));
+draw((xStart - 2, ySteps + 0.5) -- (xEnd + 2, ySteps + 0.5),
+     gray + dashed + linewidth(0.5));
 ```
 
-### 6.3 Two-Line Component Labels
+### 6.3 Dynasty / Phase Dividers
 
-Nodes often need a name + short description.
-
-```asy
-// ==========================================
-// TWO-LINE LABEL
-// ==========================================
-pair pos = (0, 0);
-real bw = 3.2;
-real bh = 1.2;
-
-filldraw(componentBox(pos, bw, bh), gatewayFill, gatewayBorder);
-label("SCX Gateway", pos + (0, 0.2));
-label("\small Auth, Quota, Billing", pos + (0, -0.25), gray(0.35));
-```
-
-### 6.4 Return / Feedback Loops
-
-Dashed or differently colored arrows for responses.
+For timelines, add horizontal dashed lines to separate phases.
 
 ```asy
-// ==========================================
-// FEEDBACK LOOP
-// ==========================================
-pair result = (6, -1);
-pair client = (-4, -1);
-
-// Return path (dashed, going below)
-pair midReturn = ((result.x+client.x)/2, -4);
-draw(result--midReturn--client,
-     rgb(0.4,0.4,0.6)+dashed+linewidth(1),
-     arrow=Arrow);
-label("\small Result", midReturn, S, rgb(0.4,0.4,0.6));
+real yDivider = (pPhase1.y + pPhase2.y) / 2;
+draw((xLeft - 1, yDivider) -- (xRight + 1, yDivider),
+     gray + linewidth(0.5) + dashed);
+label("Yongle Reign", (xLeft - 1.8, yDivider), fontsize(7pt) + gray);
 ```
 
 ---
@@ -449,254 +397,317 @@ This example demonstrates a full system architecture diagram in the style of the
 // ==========================================
 // SYSTEM ARCHITECTURE: REQUEST FLOW
 // ==========================================
-size(600, 350);
+unitsize(1.1cm);
 
 // ------------------------------------------
 // CONFIGURATION
 // ------------------------------------------
-real compW = 2.8;      // component width
-real compH = 1.0;      // component height
-real smallW = 2.0;     // small component width
-real vLayer = 2.0;     // vertical layer spacing
+real yTop       = 3.5;
+real yBot       = -3.5;
+real dx         = 4.5;
+real bw         = 3.8;
+real bh         = 1.2;
+real gap        = 0.2;
+real xStart     = -11;
 
-pen userFill     = rgb(0.85, 0.92, 1.0);
-pen userBorder   = rgb(0.2, 0.4, 0.6) + linewidth(1);
-pen gatewayFill  = rgb(1.0, 0.95, 0.85);
-pen gatewayBorder= rgb(0.5, 0.35, 0.15) + linewidth(1);
-pen routerFill   = rgb(0.85, 1.0, 0.9);
-pen routerBorder = rgb(0.15, 0.45, 0.3) + linewidth(1);
-pen workerFill   = rgb(1.0, 0.95, 0.8);
-pen workerBorder = rgb(0.5, 0.4, 0.15) + linewidth(1);
-pen resultFill   = rgb(0.9, 1.0, 0.95);
-pen resultBorder = rgb(0.2, 0.5, 0.4) + linewidth(1);
-pen clusterFill  = rgb(0.96, 0.96, 1.0);
-pen clusterBorder= rgb(0.3, 0.3, 0.6) + linewidth(1.5);
-pen solidArrow   = rgb(0.2, 0.2, 0.2) + linewidth(1.2);
-pen dashedArrow  = gray(0.5) + dashed + linewidth(0.9);
+// Annotation positions
+real yAnnTopMain = yTop + 2.2;
+real yAnnSubMain = yTop + 1.8;
+real ySteps      = yBot - 2.5;
 
-// ------------------------------------------
-// LAYER ANNOTATIONS (left side)
-// ------------------------------------------
-label("\small Web Canvas", (-7.5, 0.3), W, gray(0.4));
-label("\scriptsize Frontend", (-7.5, -0.1), W, gray(0.5));
-
-label("\small Permission", (-7.5, -vLayer+0.3), W, gray(0.4));
-label("\scriptsize Gateway", (-7.5, -vLayer-0.1), W, gray(0.5));
-
-label("\small Cluster", (-7.5, -2*vLayer+0.3), W, gray(0.4));
-label("\scriptsize Router", (-7.5, -2*vLayer-0.1), W, gray(0.5));
-
-label("\small Return", (-7.5, -3*vLayer+0.3), W, gray(0.4));
-label("\scriptsize Output", (-7.5, -3*vLayer-0.1), W, gray(0.5));
+// Colors
+pen userColor    = rgb(0.90, 0.95, 1.00);
+pen gatewayColor = rgb(1.00, 0.95, 0.85);
+pen routerColor  = rgb(0.85, 1.00, 0.90);
+pen podColor     = rgb(1.00, 0.95, 0.75);
+pen resultColor  = rgb(0.85, 1.00, 0.95);
+pen clusterFill  = rgb(0.96, 0.96, 0.99);
+pen clusterPen   = rgb(0.3, 0.3, 0.6) + linewidth(1.8);
+pen arrowPen     = rgb(0.2, 0.2, 0.2) + linewidth(0.9);
 
 // ------------------------------------------
-// COMPONENTS
+// HELPERS
 // ------------------------------------------
+void boxLabel(pair c, string[] lines, pen fillpen) {
+    pair bl = c + (-bw/2, -bh/2);
+    pair tr = c + (bw/2, bh/2);
+    fill(box(bl, tr), fillpen);
+    draw(box(bl, tr), black + 1.2pt);
+    real lineDy = 0.36;
+    real y0 = c.y + (lines.length - 1) * lineDy / 2;
+    for (int i = 0; i < lines.length; ++i)
+        label(lines[i], (c.x, y0 - i * lineDy), fontsize(9pt));
+}
 
-// User (leftmost)
-pair pUser = (-4.5, 0);
-filldraw(box(pUser+(-compW/2,-compH/2), pUser+(compW/2,compH/2)),
-         userFill, userBorder);
-label("User", pUser+(0,0.15));
-label("\small bizyair.cn", pUser+(0,-0.22), gray(0.35));
+void arrH(pair leftBox, pair rightBox) {
+    draw((leftBox.x + bw/2 + gap, leftBox.y) -- (rightBox.x - bw/2 - gap, rightBox.y),
+         arrow = Arrow(TeXHead), linewidth(0.9));
+}
 
-// Gateway
-pair pGateway = (-0.5, -vLayer);
-filldraw(box(pGateway+(-compW/2,-compH/2), pGateway+(compW/2,compH/2)),
-         gatewayFill, gatewayBorder);
-label("SCX Gateway", pGateway+(0,0.15));
-label("\small Auth, Quota", pGateway+(0,-0.22), gray(0.35));
+// ------------------------------------------
+// TITLE
+// ------------------------------------------
+label("BizyAir.cn Architecture: Request Flow", (0, 7.5), fontsize(16pt));
 
-// Inference Core Cluster (large bounding box)
-pair clusterMin = (1.5, -4.0);
-pair clusterMax = (9.5, -0.5);
-filldraw(box(clusterMin, clusterMax), clusterFill, clusterBorder);
-label("\small Inference Core Cluster", ((clusterMin.x+clusterMax.x)/2, clusterMin.y-0.3),
-      rgb(0.3,0.3,0.6));
+// ------------------------------------------
+// ACCESS LAYER
+// ------------------------------------------
+pair pUser = (xStart, yTop);
+boxLabel(pUser, new string[]{"User", "bizyair.cn Canvas"}, userColor);
 
-// CGR Router inside cluster
-pair pRouter = (4.5, -1.2);
-filldraw(box(pRouter+(-smallW/2,-compH/2), pRouter+(smallW/2,compH/2)),
-         routerFill, routerBorder);
-label("CGR Router", pRouter+(0,0.15));
-label("\small Unique Instance", pRouter+(0,-0.22), gray(0.35));
+pair pSCX = (xStart + dx, yTop);
+boxLabel(pSCX, new string[]{"SCX Gateway", "Auth, Quota, Billing"}, gatewayColor);
 
-// Dashed dispatch zone
-pair dispatchMin = (2.5, -3.5);
-pair dispatchMax = (8.5, -1.8);
-draw(box(dispatchMin, dispatchMax), gray(0.5)+dashed+linewidth(1));
-label("\small Dispatch", ((dispatchMin.x+dispatchMax.x)/2, (dispatchMin.y+dispatchMax.y)/2),
-      gray(0.5));
+arrH(pUser, pSCX);
+
+// ------------------------------------------
+// CORE CLUSTER
+// ------------------------------------------
+pair cbl = (xStart + 2.0*dx - bw/2 - 0.3, yTop - 0.5);
+pair ctr = (xStart + 5.2*dx + bw/2 + 1.8, yBot - bh/2 - 1);
+fill(box(cbl, ctr), clusterFill);
+draw(box(cbl, ctr), clusterPen);
+label("Inference Core Cluster", ((cbl.x + ctr.x)/2, ctr.y + 0.5),
+      fontsize(11pt) + rgb(0.3, 0.3, 0.6));
+
+// CGR Router
+pair pCGR = (xStart + 3.0*dx, yTop - 1.5);
+boxLabel(pCGR, new string[]{"CGR Router", "Unique Instance"}, routerColor);
 
 // Pods
-real podY = -3.2;
-pair pPod1 = (3.0, podY);
-pair pPod2 = (5.0, podY);
-pair pPod3 = (7.0, podY);
-pair pPod4 = (9.0, podY);
+pair pPod1 = (xStart + 2.5*dx, yBot);
+pair pPod2 = (xStart + 3.5*dx, yBot);
+pair pPodN = (xStart + 5.5*dx, yBot);
 
-filldraw(box(pPod1+(-smallW/2,-0.7), pPod1+(smallW/2,0.7)), workerFill, workerBorder);
-label("\small Pod 1", pPod1+(0,0.12));
-label("\scriptsize ComfyAgent", pPod1+(0,-0.18), gray(0.35));
+boxLabel(pPod1, new string[]{"Pod 1", "ComfyAgent + ComfyUI"}, podColor);
+boxLabel(pPod2, new string[]{"Pod 2", "ComfyAgent + ComfyUI"}, podColor);
+boxLabel(pPodN, new string[]{"Pod N", "ComfyAgent + ComfyUI"}, podColor);
 
-filldraw(box(pPod2+(-smallW/2,-0.7), pPod2+(smallW/2,0.7)), workerFill, workerBorder);
-label("\small Pod 2", pPod2+(0,0.12));
-label("\scriptsize ComfyAgent", pPod2+(0,-0.18), gray(0.35));
+// SCX -> CGR (curved)
+pair scxOut = (pSCX.x + bw/2 + gap, pSCX.y);
+pair cgrIn  = (pCGR.x - bw/2 - gap, pCGR.y);
+draw(scxOut{E}..{E}cgrIn, arrow = Arrow(TeXHead), linewidth(0.9));
 
-filldraw(box(pPod3+(-smallW/2,-0.7), pPod3+(smallW/2,0.7)), workerFill, workerBorder);
-label("\small Pod ...", pPod3+(0,0.12));
-label("\scriptsize ...", pPod3+(0,-0.18), gray(0.35));
+// CGR -> Pods (dashed dispatch)
+pair cgrBot = (pCGR.x, pCGR.y - bh/2 - gap);
+pen dispatchPen = gray + linewidth(0.7) + dashed;
 
-filldraw(box(pPod4+(-smallW/2,-0.7), pPod4+(smallW/2,0.7)), workerFill, workerBorder);
-label("\small Pod N", pPod4+(0,0.12));
-label("\scriptsize ComfyAgent", pPod4+(0,-0.18), gray(0.35));
-
-// Result (rightmost)
-pair pResult = (12, -2.5);
-filldraw(box(pResult+(-compW/2,-compH/2), pResult+(compW/2,compH/2)),
-         resultFill, resultBorder);
-label("Result", pResult+(0,0.15));
-label("\small Image / Data", pResult+(0,-0.22), gray(0.35));
-
-// ------------------------------------------
-// ARROWS
-// ------------------------------------------
-
-// User -> Gateway
-draw(pUser--pGateway, solidArrow, arrow=Arrow);
-
-// Gateway -> Router (curved)
-path g2r = pGateway{right}..controls (1.5, -vLayer+0.5)..{right}pRouter;
-draw(g2r, solidArrow, arrow=Arrow);
-
-// Router -> Pods (dashed dispatch)
-for (pair pod : new pair[] {pPod1, pPod2, pPod3, pPod4}) {
-    draw((pRouter.x, pRouter.y-0.6)--(pRouter.x, pod.y+0.5)--pod,
-         dashedArrow, arrow=Arrow);
+for (pair pod : new pair[] {pPod1, pPod2, pPodN}) {
+    pair podTop = (pod.x, pod.y + bh/2 + gap);
+    draw(cgrBot -- (cgrBot.x, cgrBot.y - 0.8) -- (podTop.x, cgrBot.y - 0.8) -- podTop,
+         dispatchPen);
 }
 
-// Pods -> Result (curved merge)
-path r2out = pPod4{right}..controls (11, podY)..{up}pResult;
-draw(r2out, solidArrow, arrow=Arrow);
-label("\small Merge", (10.5, -2.8), SE, gray(0.4));
+// Pods -> Result
+pair pResult = (xStart + 7.0*dx, (yTop + yBot)/2);
+boxLabel(pResult, new string[]{"Result", "Image / Video / Data"}, resultColor);
+
+pair podRowRight = (pPodN.x + bw/2 + gap, pPodN.y);
+pair resultLeft  = (pResult.x - bw/2 - gap, pResult.y);
+draw(podRowRight{E}..{E}resultLeft,
+     arrow = Arrow(TeXHead), linewidth(0.9) + dashed);
 
 // ------------------------------------------
-// STEP ANNOTATIONS (bottom)
+// STEP NUMBERING
 // ------------------------------------------
-string[] steps = {
-    "1. Send",
-    "2. Auth",
-    "3. Route",
-    "4. Dispatch",
-    "5. Parallel",
-    "6. Merge"
-};
-real stepY = -5.5;
-real stepGap = 3.2;
-for (int i = 0; i < steps.length; ++i) {
-    label("\small " + steps[i], (-5.5 + i*stepGap, stepY), gray(0.4));
-}
+label("1. Send",    (pUser.x, ySteps), fontsize(8pt));
+label("2. Auth",    (pSCX.x, ySteps), fontsize(8pt));
+label("3. Route",   (pCGR.x, ySteps), fontsize(8pt));
+label("4. Dispatch", (pCGR.x, ySteps - 0.5), fontsize(8pt));
+label("5. Parallel", (pPod2.x, ySteps), fontsize(8pt));
+label("6. Merge",   (pResult.x, ySteps), fontsize(8pt));
 
 // ------------------------------------------
-// CAPTION
+// TOP ANNOTATIONS
 // ------------------------------------------
-label("\small FaaS: Function-as-a-Service / CGR: Comfy Grid Runtime / SCX: Service Control X",
-      (3, -6.5), gray(0.5));
+label("Web Canvas", (pUser.x, yAnnTopMain), fontsize(8pt));
+label("Frontend",   (pUser.x, yAnnSubMain), fontsize(7pt) + gray);
+
+label("Permission", (pSCX.x, yAnnTopMain), fontsize(8pt));
+label("Gateway",    (pSCX.x, yAnnSubMain), fontsize(7pt) + gray);
+
+label("Cluster",    (pCGR.x, yAnnTopMain), fontsize(8pt));
+label("Router",     (pCGR.x, yAnnSubMain), fontsize(7pt) + gray);
+
+label("Return",     (pResult.x, yAnnTopMain), fontsize(8pt));
+label("Output",     (pResult.x, yAnnSubMain), fontsize(7pt) + gray);
+
+// ------------------------------------------
+// LEGEND
+// ------------------------------------------
+label("FaaS: Function-as-a-Service / CGR: Comfy Grid Runtime / SCX: Service Control X",
+      (0, yBot - 3.5), fontsize(9pt));
 ```
 
 ---
 
-## 8. Complete Example: Cooking Flow (番茄炒蛋)
+## 8. Complete Example: Cooking Workflow (番茄炒蛋)
 
-A workflow diagram showing the steps of cooking tomato scrambled eggs, with parallel preparation paths.
+A workflow diagram showing the steps of cooking tomato scrambled eggs, with parallel preparation paths. This example uses the **picture-based modular composition** pattern (see §3.4) because the diagram has parallel branches and side annotations that would be fragile with raw `pair` coordinates.
 
 ```asy
 // ==========================================
 // WORKFLOW: TOMATO SCRAMBLED EGGS
+// Using picture types for modular node composition
 // ==========================================
-size(400, 500);
+unitsize(1.0cm);
 
 // ------------------------------------------
 // CONFIGURATION
 // ------------------------------------------
-real bw = 2.8;
-real bh = 0.9;
-real vGap = 1.6;
-real branchGap = 3.5;
+real bw       = 3.0;
+real bh       = 0.9;
+real gap      = 0.25;
+real nodeDy   = 1.6;
 
-pen prepFill    = rgb(1.0, 0.97, 0.9);
-pen prepBorder  = rgb(0.5, 0.4, 0.2) + linewidth(1);
-pen cookFill    = rgb(1.0, 0.92, 0.85);
-pen cookBorder  = rgb(0.6, 0.35, 0.15) + linewidth(1);
-pen doneFill    = rgb(0.9, 1.0, 0.95);
-pen doneBorder  = rgb(0.2, 0.5, 0.4) + linewidth(1);
-pen arrowPen    = rgb(0.3, 0.2, 0.1) + linewidth(1);
+real xMain   = 0;
+real xLeftB  = -2.8;   // left branch x
+real xRightB =  2.8;   // right branch x
+real y0      = 0;      // top of main column
+
+pen prepFill    = rgb(1.00, 0.97, 0.90);
+pen prepBorder  = rgb(0.50, 0.40, 0.20) + linewidth(1.2);
+pen cookFill    = rgb(1.00, 0.92, 0.85);
+pen cookBorder  = rgb(0.60, 0.35, 0.15) + linewidth(1.2);
+pen doneFill    = rgb(0.90, 1.00, 0.95);
+pen doneBorder  = rgb(0.20, 0.50, 0.40) + linewidth(1.2);
+pen arrowPen    = rgb(0.30, 0.20, 0.10) + linewidth(0.9);
 
 // ------------------------------------------
-// NODES
+// NODE BUILDER — returns a picture centered at (0,0)
 // ------------------------------------------
-pair pStart = (0, 0);
-pair pPrep  = (0, -vGap);
-pair pCut   = (-branchGap/2, -2*vGap);
-pair pBeat  = ( branchGap/2, -2*vGap);
-pair pHeat  = (0, -3*vGap);
-pair pFryE  = (0, -4*vGap);
-pair pFryT  = (0, -5*vGap);
-pair pMix   = (0, -6*vGap);
-pair pSeason= (0, -7*vGap);
-pair pDone  = (0, -8*vGap);
-
-// Start
-filldraw(ellipse(pStart, 1.8, 0.7), doneFill, doneBorder);
-label("\small Start", pStart);
-
-// Prep ingredients
-filldraw(box(pPrep+(-bw/2,-bh/2), pPrep+(bw/2,bh/2)), prepFill, prepBorder);
-label("\small Prep", pPrep+(0,0.12));
-label("\scriptsize wash, measure", pPrep+(0,-0.18), gray(0.4));
-
-// Parallel prep
-filldraw(box(pCut+(-bw/2,-bh/2), pCut+(bw/2,bh/2)), prepFill, prepBorder);
-label("\small Cut", pCut);
-
-filldraw(box(pBeat+(-bw/2,-bh/2), pBeat+(bw/2,bh/2)), prepFill, prepBorder);
-label("\small Beat", pBeat);
-
-// Cooking steps
-for (int i = 0; i < 5; ++i) {
-    pair p = (0, -(3+i)*vGap);
-    filldraw(box(p+(-bw/2,-bh/2), p+(bw/2,bh/2)), cookFill, cookBorder);
+picture makeNode(string[] lines, pen fillpen, pen borderpen) {
+    picture pic;
+    pair bl = (-bw/2, -bh/2);
+    pair tr = ( bw/2,  bh/2);
+    fill(pic, box(bl, tr), fillpen);
+    draw(pic, box(bl, tr), borderpen);
+    real lineDy = 0.32;
+    real y0 = (lines.length - 1) * lineDy / 2;
+    for (int i = 0; i < lines.length; ++i)
+        label(pic, lines[i], (0, y0 - i * lineDy), fontsize(9pt));
+    return pic;
 }
 
-label("\small Heat Oil", pHeat);
-label("\small Fry Eggs", pFryE);
-label("\small Fry Tomato", pFryT);
-label("\small Mix", pMix);
-label("\small Season", pSeason);
-
-// Done
-filldraw(ellipse(pDone, 1.8, 0.7), doneFill, doneBorder);
-label("\small Serve", pDone);
+picture makeNode(string text, pen fillpen, pen borderpen) {
+    return makeNode(new string[]{text}, fillpen, borderpen);
+}
 
 // ------------------------------------------
-// ARROWS
+// ARROW HELPERS — draw on dest using placed picture anchors
 // ------------------------------------------
-draw(pStart--pPrep, arrowPen, arrow=Arrow);
+void arrowDown(picture dest, picture topNode, picture botNode) {
+    pair a = point(topNode, S) + (0, -gap);
+    pair b = point(botNode, N) + (0,  gap);
+    draw(dest, a -- b, arrow = Arrow(TeXHead), arrowPen);
+}
 
-// Split to parallel prep
-draw(pPrep--pCut, arrowPen, arrow=Arrow);
-draw(pPrep--pBeat, arrowPen, arrow=Arrow);
+void arrowBranch(picture dest, picture parent,
+                 picture leftChild, picture rightChild) {
+    pair p = point(parent, S);
+    pair l = point(leftChild,  N) + (0, gap);
+    pair r = point(rightChild, N) + (0, gap);
+    pair fork = (p.x, p.y - 0.6);
+    draw(dest, p -- fork, arrowPen);
+    draw(dest, fork -- l, arrow = Arrow(TeXHead), arrowPen);
+    draw(dest, fork -- r, arrow = Arrow(TeXHead), arrowPen);
+}
 
-// Merge back
-draw(pCut--(pCut.x, pHeat.y)--pHeat, arrowPen, arrow=Arrow);
-draw(pBeat--(pBeat.x, pHeat.y)--pHeat, arrowPen, arrow=Arrow);
+void arrowJoinLeft(picture dest, picture sideNode, picture mainNode) {
+    pair a = point(sideNode, S) + (0, -gap);
+    pair b = point(mainNode,  W) + (-gap, 0);
+    draw(dest, a -- (a.x, b.y) -- b, arrow = Arrow(TeXHead), arrowPen);
+}
 
-// Sequential cooking
-draw(pHeat--pFryE, arrowPen, arrow=Arrow);
-draw(pFryE--pFryT, arrowPen, arrow=Arrow);
-draw(pFryT--pMix, arrowPen, arrow=Arrow);
-draw(pMix--pSeason, arrowPen, arrow=Arrow);
-draw(pSeason--pDone, arrowPen, arrow=Arrow);
+void arrowJoinRight(picture dest, picture sideNode, picture mainNode) {
+    pair a = point(sideNode, S) + (0, -gap);
+    pair b = point(mainNode,  E) + (gap, 0);
+    draw(dest, a -- (a.x, b.y) -- b, arrow = Arrow(TeXHead), arrowPen);
+}
+
+// ------------------------------------------
+// BUILD MAIN DIAGRAM
+// ------------------------------------------
+picture diagram;
+
+// --- Create and position nodes (shift baked into each picture) ---
+picture pStart  = shift(xMain,   y0)            * makeNode("Start", doneFill, doneBorder);
+picture pPrep   = shift(xMain,   y0 - nodeDy)   * makeNode(new string[]{"Prep", "wash \& measure"}, prepFill, prepBorder);
+picture pCut    = shift(xLeftB,  y0 - 2*nodeDy) * makeNode("Cut Tomato", prepFill, prepBorder);
+picture pBeat   = shift(xRightB, y0 - 2*nodeDy) * makeNode("Beat Eggs", prepFill, prepBorder);
+picture pHeat   = shift(xMain,   y0 - 3*nodeDy) * makeNode("Heat Oil", cookFill, cookBorder);
+picture pFryE   = shift(xMain,   y0 - 4*nodeDy) * makeNode("Fry Eggs", cookFill, cookBorder);
+picture pFryT   = shift(xMain,   y0 - 5*nodeDy) * makeNode("Fry Tomato", cookFill, cookBorder);
+picture pMix    = shift(xMain,   y0 - 6*nodeDy) * makeNode("Mix", cookFill, cookBorder);
+picture pSeason = shift(xMain,   y0 - 7*nodeDy) * makeNode("Season", cookFill, cookBorder);
+picture pDone   = shift(xMain,   y0 - 8*nodeDy) * makeNode("Serve", doneFill, doneBorder);
+
+// Add all nodes to diagram
+add(diagram, pStart);
+add(diagram, pPrep);
+add(diagram, pCut);
+add(diagram, pBeat);
+add(diagram, pHeat);
+add(diagram, pFryE);
+add(diagram, pFryT);
+add(diagram, pMix);
+add(diagram, pSeason);
+add(diagram, pDone);
+
+// --- Draw arrows using node picture anchor points ---
+arrowDown(diagram, pStart, pPrep);
+arrowJoinRight(diagram, pPrep, pCut);
+arrowJoinLeft(diagram, pPrep, pBeat);
+arrowJoinLeft(diagram, pCut, pHeat);
+arrowJoinRight(diagram, pBeat, pHeat);
+arrowDown(diagram, pHeat, pFryE);
+arrowDown(diagram, pFryE, pFryT);
+arrowDown(diagram, pFryT, pMix);
+arrowDown(diagram, pMix, pSeason);
+arrowDown(diagram, pSeason, pDone);
+
+// --- Title ---
+label(diagram, "\textbf{Workflow: Tomato Scrambled Eggs}",
+      (xMain, y0 + 1.2), fontsize(14pt));
+
+// --- Side annotations ---
+real xAnnotLeft  = xLeftB  - 2.2;
+real xAnnotRight = xRightB + 2.2;
+
+label(diagram, "Ingredients", (xAnnotLeft,  point(pPrep, N).y - bh/2), fontsize(8pt));
+label(diagram, "Tomato",      (xAnnotLeft,  point(pCut,  (0,0)).y + 0.35), fontsize(8pt));
+label(diagram, "Eggs",        (xAnnotLeft,  point(pBeat, (0,0)).y - 0.35), fontsize(8pt));
+label(diagram, "Cooking",     (xAnnotLeft,  point(pHeat, (0,0)).y),    fontsize(8pt));
+label(diagram, "Medium heat", (xAnnotLeft,  point(pFryE, (0,0)).y),    fontsize(8pt));
+label(diagram, "Stir-fry",    (xAnnotLeft,  point(pFryT, (0,0)).y),    fontsize(8pt));
+label(diagram, "Combine",     (xAnnotLeft,  point(pMix,  (0,0)).y),    fontsize(8pt));
+label(diagram, "Salt",        (xAnnotLeft,  point(pSeason,(0,0)).y),   fontsize(8pt));
+
+label(diagram, "2 tomatoes",  (xAnnotRight, point(pCut,  (0,0)).y + 0.35), fontsize(8pt));
+label(diagram, "3 eggs",      (xAnnotRight, point(pBeat, (0,0)).y - 0.35), fontsize(8pt));
+label(diagram, "1 min",       (xAnnotRight, point(pFryE, (0,0)).y),    fontsize(8pt));
+label(diagram, "2 min",       (xAnnotRight, point(pFryT, (0,0)).y),    fontsize(8pt));
+label(diagram, "Quick toss",  (xAnnotRight, point(pMix,  (0,0)).y),    fontsize(8pt));
+label(diagram, "Pinch",       (xAnnotRight, point(pSeason,(0,0)).y),   fontsize(8pt));
+label(diagram, "Enjoy!",      (xAnnotRight, point(pDone, (0,0)).y),    fontsize(8pt));
+
+// --- Step numbering ---
+real ySteps = y0 - 9.5*nodeDy;
+label(diagram, "1. Prep",     (xMain - 3.5, ySteps), fontsize(8pt));
+label(diagram, "2. Parallel", (xMain - 1.0, ySteps), fontsize(8pt));
+label(diagram, "3. Heat",     (xMain + 1.0, ySteps), fontsize(8pt));
+label(diagram, "4. Cook",     (xMain + 3.0, ySteps), fontsize(8pt));
+label(diagram, "5. Serve",    (xMain + 5.0, ySteps), fontsize(8pt));
+
+// --- Bottom quote ---
+label(diagram, "\"The secret to great tomato eggs is frying the eggs until fluffy.\"",
+      (xMain, y0 - 10.5*nodeDy), fontsize(9pt));
+
+// ------------------------------------------
+// CENTER AND SHIP
+// ------------------------------------------
+diagram = shift(-min(diagram, true)) * diagram;
+add(diagram);
 ```
 
 ---
@@ -705,12 +716,12 @@ draw(pSeason--pDone, arrowPen, arrow=Arrow);
 
 | Element | Usage | Style |
 |---------|-------|-------|
-| Component box | Individual service/node/stage | Rectangle, colored fill |
+| Component box | Individual service/node/stage | Rectangle, colored fill, 1.2pt border |
 | Cluster box | Group of related components | Large rectangle, light fill, bold border |
 | Dashed group | Logical/optional grouping | Dashed border, no fill |
-| Solid arrow | Primary data/control flow | Dark, 1.2bp, `arrow=Arrow` |
-| Dashed arrow | Internal dispatch, secondary flow | Gray, dashed, 0.9bp |
-| Curved arrow | Avoid crossing other lines | Bezier curve with control points |
+| Solid arrow | Primary data/control flow | `Arrow(TeXHead)`, 0.9bp |
+| Dashed arrow | Internal dispatch, secondary flow | Gray, dashed, 0.7bp |
+| Curved arrow | Avoid crossing other lines | Bezier curve with `{dir}..{dir}` |
 | Layer label | Annotate architectural layer | Left-aligned gray text |
 | Step number | Bottom timeline annotation | Small gray text, evenly spaced |
 | Node text | Name + one-line description | Name centered, description below in gray |
@@ -719,14 +730,16 @@ draw(pSeason--pDone, arrowPen, arrow=Arrow);
 
 ## 10. Common Pitfalls
 
-1. **Overcrowding nodes** — Keep to name + one short line. Put details in captions.
+1. **Using `margin=EndMargin` instead of precise coordinates** — Asymptote's strength is exact positioning. Compute arrow endpoints with `bh/2 + gap` rather than relying on heuristic margin parameters.
 
-2. **Inconsistent arrow styles** — Use solid for main flow, dashed for internal/subordinate flow.
+2. **Overcrowding nodes** — Keep to name + one short line. Put details in side annotations or captions.
 
-3. **Missing cluster labels** — Every bounding box should have a label indicating what the group represents.
+3. **Inconsistent arrow styles** — Use solid for main flow, dashed for internal/subordinate flow.
 
-4. **Arrow crossings** — Route around clusters or use curves. Avoid crossing solid arrows.
+4. **Missing cluster labels** — Every bounding box should have a label indicating what the group represents.
 
-5. **Monochrome diagrams** — Use the color palette to distinguish roles. Color is faster to parse than text.
+5. **Arrow crossings** — Route around clusters or use curves. Avoid crossing solid arrows.
 
-6. **No layer context** — For complex systems, add layer annotations on the left so readers know which architectural level they're viewing.
+6. **Monochrome diagrams** — Use the color palette to distinguish roles. Color is faster to parse than text.
+
+7. **No layer context** — For complex systems, add layer annotations on the left so readers know which architectural level they're viewing.
