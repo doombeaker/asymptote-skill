@@ -3,5 +3,6 @@ doc/
 examples/
 .sisyphus/
 .opencode/
+.omo/
 vendor/
 *.asy

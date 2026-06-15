@@ -1,6 +1,6 @@
 ---
 name: asymptote
-description: Expert Asymptote vector graphics language skill for generating technical drawings, geometric figures, scientific graphs, 3D visualizations, flowcharts, Feynman diagrams, circuit diagrams, and animations with LaTeX-quality typesetting.
+description: Expert Asymptote vector graphics language skill for generating technical drawings, geometric figures, scientific graphs, and flowcharts with LaTeX-quality typesetting.
 license: LGPL-3.0
 compatibility: opencode
 metadata:
@@ -16,31 +16,19 @@ This skill enables the agent to generate high-quality technical vector graphics 
 ## Capabilities
 
 - **2D Geometric Drawings**: Points, lines, circles, polygons, curves, transformations
-- **Scientific Graphs**: 2D/3D function plots, data visualization, contour plots, parametric curves
-- **3D Graphics**: Surfaces, solids, lighting, projections, interactive WebGL/PRC
-- **Flowcharts**: Block diagrams, control systems, algorithm visualization
-- **Feynman Diagrams**: Particle physics diagrams with fermions, photons, gluons
-- **Circuit Diagrams**: Electrical/electronic circuit schematics
-- **Animations**: Frame-based animations, interactive 3D scenes
-- **Engineering/CAD**: Technical drawings with standard line types and symbols
+- **Scientific Graphs**: 2D function plots, data visualization, parametric curves, polar plots
+- **Flowcharts**: Block diagrams, algorithm visualization using default primitives
 
 ## Skill Structure
 
-This skill is organized into multiple documentation files and templates:
+This skill is organized into documentation files covering the core capabilities:
 
 | File | Content |
 |------|---------|
-| `docs/01-basics.md` | Core language syntax, drawing primitives, paths, pens, transforms |
-| `docs/02-geometry.md` | 2D geometric constructions, angles, triangles, circles, intersections |
-| `docs/03-scientific-graphs.md` | graph.asy module, axes, ticks, legends, palettes |
-| `docs/04-3d-graphics.md` | three.asy module, surfaces, solids, lighting, projections |
-| `docs/05-flowcharts.md` | flowchart.asy module, block diagrams, connectors |
-| `docs/06-feynman-diagrams.md` | feynman.asy module, particle physics diagrams |
-| `docs/07-animations.md` | animate.asy, animation.asy, frame generation |
-| `docs/08-circuits.md` | Circuit diagram conventions and construction techniques |
-| `docs/09-cad-engineering.md` | CAD.asy, technical drawing standards |
-| `templates/*.asy` | Ready-to-use templates for each category |
-| `examples/*.asy` | Curated example files |
+| `docs/01-basics.md` | Core language syntax, drawing primitives, paths, pens, transforms, coding standards |
+| `docs/02-geometry.md` | 2D geometric constructions using the `geometry` module |
+| `docs/03-scientific-graphs.md` | Scientific plotting with the `graph` module and `colormap` |
+| `docs/04-flowchart.md` | Flowchart construction using default Asymptote primitives |
 
 ## How to Use
 
@@ -60,15 +48,9 @@ This skill is organized into multiple documentation files and templates:
 - `unitsquare`, `unitcircle` — predefined paths
 
 ### Optional Standard Modules
-- `geometry` — advanced geometric constructions
-- `graph` / `graph3` — scientific plotting
-- `three` / `solids` — 3D graphics
-- `flowchart` — flowchart diagrams
-- `feynman` — Feynman diagrams
-- `animate` / `animation` — animations
-- `CAD` — engineering drawing standards
-- `palette` — color palettes for data visualization
-- `contour` / `contour3` — contour plots
+- `geometry` — advanced geometric constructions (points, lines, circles, triangles, conics)
+- `graph` — scientific plotting (functions, data, axes, ticks, error bars)
+- `colormap` — matplotlib-compatible color palettes for data visualization
 
 ## Output Formats
 
@@ -77,8 +59,6 @@ Asymptote supports multiple output formats:
 - **EPS/PS**: `asy file.asy`
 - **SVG**: `asy -f svg file.asy`
 - **PNG/JPG** (via ImageMagick): `asy -f png file.asy`
-- **WebGL**: for interactive 3D in HTML
-- **PRC**: for 3D in PDF
 
 ## Important Conventions
 
