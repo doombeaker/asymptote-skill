@@ -29,6 +29,7 @@ This skill is organized into documentation files and ready-to-use templates:
 | `docs/02-geometry.md` | 2D geometric constructions using the `geometry` module |
 | `docs/03-scientific-graphs.md` | Scientific plotting with the `graph` module and `colormap` |
 | `docs/04-flowchart.md` | Flowchart construction using default Asymptote primitives |
+| `docs/05-picture-guide.md` | Practical `picture` composition guide: reusable components, transforms, subplots, overlays |
 | `templates/` | Ready-to-use templates for common drawing types (see list below) |
 
 ### Templates
@@ -231,3 +232,14 @@ path resistorSymbol(pair start, pair end, real width=0.3, int zigzags=5) {
     return g--end;
 }
 ```
+
+### 6. Use Visual Feedback When Available
+
+If the execution environment supports image viewing, use an iterative visual feedback loop to refine the output:
+
+1. **Generate a preview**: Compile with `asy -f png file.asy` (requires ImageMagick) to produce a raster image that can be inspected immediately.
+2. **Inspect visually**: Evaluate proportions, alignment, color balance, label placement, and whitespace directly from the rendered image.
+3. **Adjust code**: Tweak coordinates, pens, sizes, or transforms based on what you see, then regenerate.
+4. **Final export**: Once the visual result is satisfactory, export to the desired final format (usually PDF or SVG).
+
+This loop is especially valuable for complex multi-layer compositions where purely analytical coordinate calculations are not enough to guarantee a clean layout.
