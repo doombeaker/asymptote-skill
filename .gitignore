@@ -2,3 +2,11 @@ base/
 doc/
 examples/
 .sisyphus/
+.opencode/
+.omo/
+vendor/
+examples/
+templates/*.pdf
+templates/*.svg
+templates/*.png
+templates/*.eps
