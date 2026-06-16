@@ -11,6 +11,7 @@ Asymptote is a powerful descriptive vector graphics language that provides a mat
 - **2D Geometric Drawings**: Points, lines, circles, triangles, polygons, conics, transformations
 - **Scientific Graphs**: 2D function plots, data visualization, parametric curves, polar plots, error bars, vector fields
 - **Flowcharts**: Block diagrams, algorithm visualization using default Asymptote primitives
+- **Picture Composition**: Reusable components, layered drawings, subplots, overlays using `add(picture, picture)`
 
 ## Structure
 
@@ -21,7 +22,8 @@ Asymptote is a powerful descriptive vector graphics language that provides a mat
 │   ├── 01-basics.md      # Core language syntax, paths, pens, transforms, coding standards
 │   ├── 02-geometry.md    # 2D geometric constructions using the geometry module
 │   ├── 03-scientific-graphs.md  # Scientific plotting with graph and colormap modules
-│   └── 04-flowchart.md   # Flowchart construction using default primitives
+│   ├── 04-flowchart.md   # Flowchart construction using default primitives
+│   └── 05-picture-guide.md      # Practical `picture` composition: components, transforms, overlays
 ├── templates/            # Ready-to-use Asymptote templates
 │   ├── geometric_*.asy   # 2D geometric drawing templates
 │   ├── scientific_*.asy  # Scientific graph templates
@@ -108,6 +110,7 @@ This skill enforces the following principles for all generated code:
 2. **Default capabilities first**: Prefer Asymptote's built-in primitives over standard libraries (e.g., use default drawing for flowcharts instead of `import flowchart`)
 3. **English-only output**: All labels, comments, and variable names are in English (Asymptote has poor CJK support)
 4. **Clean aesthetics**: Minimal text in diagram elements (1-3 words per flowchart block), consistent styling, effective whitespace
+5. **Picture-based composition**: Encapsulate repeated elements in `picture` functions, compose with `add(dest, src)`, and apply transforms (`shift`, `rotate`) before adding
 
 ## Output Formats
 
