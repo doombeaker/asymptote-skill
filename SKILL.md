@@ -128,7 +128,50 @@ draw(a--b--c--cycle);
 draw(c--(1,0), dashed);
 ```
 
-### 2. Avoid Magic Numbers — Use Named Constants
+### 2. Never Use Reserved Keywords as Variable Names
+
+Asymptote reserves several keywords that **must not** appear as identifiers (variable names, parameter names, function names). Using them causes cryptic syntax errors.
+
+**Full reserved word list:**
+
+| Category | Keywords |
+|----------|----------|
+| Conditional | `if`, `else` |
+| Loop | `while`, `for`, `do`, `break`, `continue` |
+| Return | `return` |
+| Declaration | `struct`, `typedef`, `using` |
+| Object | `new`, `operator`, `this`, `explicit` |
+| Import | `import`, `include`, `access`, `from`, `unravel`, `quote` |
+
+> **`from` is the most common accidental violation** — it looks natural as a parameter name (e.g., `pair fromDir`) but `from` is a keyword used in `from module access symbol;`. Always choose an alternative name.
+
+**Safe alternatives:**
+
+| Avoid | Use instead |
+|-------|-------------|
+| `from` | `src` (source), `origin` (starting point), `startDir` (direction from source) |
+| `to` | `tgt` (target), `dest` (destination), `endDir` (direction to target) |
+| `new` | `fresh`, `created`, `initial` |
+| `access` | `entry`, `retrieval` |
+| `include` | `embed`, `insert` |
+
+**Bad — `from` is a keyword:**
+```asy
+void arrowCurve(picture dest, picture src, pair fromDir,
+                picture to, pair toDir) {
+    pair a = point(src, fromDir) + gap * fromDir;  // COMPILE ERROR
+}
+```
+
+**Good — use `srcDir` instead:**
+```asy
+void arrowCurve(picture dest, picture src, pair srcDir,
+                picture tgt, pair tgtDir) {
+    pair a = point(src, srcDir) + gap * srcDir;
+}
+```
+
+### 3. Avoid Magic Numbers — Use Named Constants
 
 Never hard-code the same value multiple times. Define constants at the top of your script so adjustments (e.g., changing a radius or spacing) require only a single edit.
 
@@ -149,7 +192,7 @@ block b2 = rectangle("Process", (0,-2.5));
 block b3 = diamond("Valid?", (0,-5.0));
 ```
 
-### 3. Comment Strategically
+### 4. Comment Strategically
 
 Comments should explain *what visual element* a block of code produces, making it easy for someone reading the code to locate the corresponding part of the image.
 
@@ -172,7 +215,7 @@ draw(vertexC--footD, dashed);
 label("$D$", footD, S);
 ```
 
-### 4. Group Related Drawing Operations
+### 5. Group Related Drawing Operations
 
 Organize code into logical sections with blank lines and section comments. Group setup, drawing, labeling, and annotations separately.
 
@@ -210,7 +253,7 @@ label("$B$", pointB, NE);
 label("$C$", pointC, NW);
 ```
 
-### 5. Reusable Components as Functions
+### 6. Reusable Components as Functions
 
 For repeated visual elements (circuit symbols, custom arrows, grid nodes), define reusable functions rather than duplicating code.
 
@@ -233,7 +276,7 @@ path resistorSymbol(pair start, pair end, real width=0.3, int zigzags=5) {
 }
 ```
 
-### 6. Use Visual Feedback When Available
+### 7. Use Visual Feedback When Available
 
 If the execution environment supports image viewing, use an iterative visual feedback loop to refine the output:
 

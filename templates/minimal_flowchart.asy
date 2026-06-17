@@ -1,69 +1,93 @@
 // ==========================================
-// TEMPLATE: Minimal Flowchart (<= 5 nodes)
-// Uses pair coordinates — quick to write, no boilerplate
+// TEMPLATE: Minimal Vertical Flowchart
+// Demonstrates: picture components, point() anchors, straight arrows
+// Use this as the starting point for simple sequential workflows
 // ==========================================
-unitsize(1.0cm);
 
 // ------------------------------------------
 // CONFIGURATION
 // ------------------------------------------
-real bw       = 3.0;   // Box width
-real bh       = 0.9;   // Box height
-real gap      = 0.2;   // Gap between box and arrow
-real dy       = 1.5;   // Vertical step between nodes
+real bw     = 3.0;    // Box width
+real bh     = 0.9;    // Box height
+real gap    = 0.25;   // Gap between box edge and arrow tip
+real lineDy = 0.32;   // Line spacing inside multi-line box
+real nodeDy = 2.0;    // Vertical step between rows
 
-// Color palette
-pen doneFill   = rgb(0.90, 1.00, 0.95);
-pen doneBorder = rgb(0.20, 0.50, 0.40) + linewidth(1.2);
-pen procFill   = rgb(1.00, 0.92, 0.85);
-pen procBorder = rgb(0.60, 0.35, 0.15) + linewidth(1.2);
-pen arrowPen   = rgb(0.30, 0.20, 0.10) + linewidth(0.9);
+real xCenter = 0;     // Center column x-coordinate
+real yTop    = 0;      // Top of diagram
+
+// Colors — one pen pair per role
+pen startFill   = rgb(0.90, 0.95, 1.00);  pen startBorder   = rgb(0.25, 0.40, 0.60) + linewidth(1.2);
+pen processFill = rgb(1.00, 0.97, 0.90);  pen processBorder = rgb(0.50, 0.40, 0.20) + linewidth(1.2);
+pen doneFill    = rgb(0.90, 1.00, 0.95);  pen doneBorder    = rgb(0.20, 0.50, 0.40) + linewidth(1.2);
+pen arrowPen    = rgb(0.25, 0.25, 0.25) + linewidth(0.9);
 
 // ------------------------------------------
-// HELPERS
+// NODE COMPONENT — returns picture centered at origin
 // ------------------------------------------
-void boxLabel(pair c, string[] lines, pen fillpen, pen borderpen) {
-    pair bl = c + (-bw/2, -bh/2);
-    pair tr = c + ( bw/2,  bh/2);
-    fill(box(bl, tr), fillpen);
-    draw(box(bl, tr), borderpen);
-    real lineDy = 0.32;
-    real y0 = c.y + (lines.length - 1) * lineDy / 2;
+picture label_box_pic(real bw, real bh, real lineDy,
+                      string[] lines, pen fillPen, pen borderPen) {
+    picture pic;
+    fill(pic, box((-bw/2, -bh/2), (bw/2, bh/2)), fillPen);
+    draw(pic, box((-bw/2, -bh/2), (bw/2, bh/2)), borderPen);
+    real y0 = (lines.length - 1) * lineDy / 2;
     for (int i = 0; i < lines.length; ++i)
-        label(lines[i], (c.x, y0 - i * lineDy), fontsize(9pt));
+        label(pic, lines[i], (0, y0 - i * lineDy), fontsize(9pt));
+    return pic;
 }
 
-void boxLabel(pair c, string text, pen fillpen, pen borderpen) {
-    boxLabel(c, new string[]{text}, fillpen, borderpen);
-}
-
-// Straight vertical arrow
-void arrV(pair topBox, pair botBox) {
-    pair start = (topBox.x, topBox.y - bh/2 - gap);
-    pair end   = (botBox.x, botBox.y + bh/2 + gap);
-    draw(start -- end, arrow = Arrow(TeXHead), arrowPen);
-}
-
-// Straight horizontal arrow
-void arrH(pair leftBox, pair rightBox) {
-    pair start = (leftBox.x + bw/2 + gap, leftBox.y);
-    pair end   = (rightBox.x - bw/2 - gap, rightBox.y);
-    draw(start -- end, arrow = Arrow(TeXHead), arrowPen);
+picture label_box_pic(real bw, real bh, real lineDy,
+                      string text, pen fillPen, pen borderPen) {
+    return label_box_pic(bw, bh, lineDy, new string[]{text}, fillPen, borderPen);
 }
 
 // ------------------------------------------
-// TODO: Replace nodes below with your own workflow
+// ARROW HELPER — vertical arrow using point() anchors
 // ------------------------------------------
-pair pStart = (0, 0);
-pair pStep1 = (0, -dy);
-pair pStep2 = (0, -2*dy);
-pair pEnd   = (0, -3*dy);
+void arrowDown(picture dest, picture top, picture bot) {
+    pair a = point(top, S) + (0, -gap);
+    pair b = point(bot, N) + (0,  gap);
+    draw(dest, a -- b, arrow = Arrow(TeXHead), arrowPen);
+}
 
-boxLabel(pStart, "Start", doneFill, doneBorder);
-boxLabel(pStep1, new string[]{"Process", "description"}, procFill, procBorder);
-boxLabel(pStep2, new string[]{"Another", "step"}, procFill, procBorder);
-boxLabel(pEnd,   "End", doneFill, doneBorder);
+// ------------------------------------------
+// BUILD DIAGRAM
+// ------------------------------------------
 
-arrV(pStart, pStep1);
-arrV(pStep1, pStep2);
-arrV(pStep2, pEnd);
+// --- Create and position nodes (shift baked into each picture) ---
+picture pStart = shift(xCenter, yTop)
+    * label_box_pic(bw, bh, lineDy, "Start", startFill, startBorder);
+
+picture pStep1 = shift(xCenter, yTop - nodeDy)
+    * label_box_pic(bw, bh, lineDy, new string[]{"Step 1", "Describe"}, processFill, processBorder);
+
+picture pStep2 = shift(xCenter, yTop - 2*nodeDy)
+    * label_box_pic(bw, bh, lineDy, new string[]{"Step 2", "Describe"}, processFill, processBorder);
+
+picture pStep3 = shift(xCenter, yTop - 3*nodeDy)
+    * label_box_pic(bw, bh, lineDy, new string[]{"Step 3", "Describe"}, processFill, processBorder);
+
+picture pDone = shift(xCenter, yTop - 4*nodeDy)
+    * label_box_pic(bw, bh, lineDy, "Done", doneFill, doneBorder);
+
+// --- Assemble ---
+picture diagram;
+size(diagram, 10cm);
+
+// Arrows (drawn first → behind nodes)
+arrowDown(diagram, pStart, pStep1);
+arrowDown(diagram, pStep1, pStep2);
+arrowDown(diagram, pStep2, pStep3);
+arrowDown(diagram, pStep3, pDone);
+
+// Add nodes on top of arrows
+add(diagram, pStart);
+add(diagram, pStep1);
+add(diagram, pStep2);
+add(diagram, pStep3);
+add(diagram, pDone);
+
+// ------------------------------------------
+// CENTER AND SHIP
+// ------------------------------------------
+shipout(shift(-min(diagram, true)) * diagram);
