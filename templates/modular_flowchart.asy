@@ -99,10 +99,10 @@ void chainH(picture dest, picture[] nodes, real gap, pen p) {
              arrow = Arrow(TeXHead), p);
 }
 
-void arrowV(picture dest, picture src, pair fromDir,
-            picture to, pair toDir, real gap, pen p) {
-    draw(dest, point(src, fromDir) + gap * fromDir
-                -- point(to,   toDir)   + gap * toDir,
+void arrowV(picture dest, picture src, pair srcDir,
+            picture tgt, pair tgtDir, real gap, pen p) {
+    draw(dest, point(src, srcDir) + gap * srcDir
+                -- point(tgt,   tgtDir)   + gap * tgtDir,
          arrow = Arrow(TeXHead), p);
 }
 

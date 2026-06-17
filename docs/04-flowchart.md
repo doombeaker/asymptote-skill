@@ -148,11 +148,11 @@ void arrowJoinRight(picture dest, picture side, picture main,
 }
 
 // Curved arrow (for crossing routes or long jumps)
-void arrowCurve(picture dest, picture src, pair fromDir,
-                picture to, pair toDir,
+void arrowCurve(picture dest, picture src, pair srcDir,
+                picture tgt, pair tgtDir,
                 real gap=0.2, pen p=currentpen) {
-    pair a = point(src, fromDir) + gap * fromDir;
-    pair b = point(to, toDir) + gap * toDir;
+    pair a = point(src, srcDir) + gap * srcDir;
+    pair b = point(tgt, tgtDir) + gap * tgtDir;
     draw(dest, a{right}..{right}b, arrow = Arrow(TeXHead), p);
 }
 ```

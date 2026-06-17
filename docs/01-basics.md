@@ -615,6 +615,49 @@ draw(a--b--c--cycle);
 draw(c--(1,0), dashed);
 ```
 
+#### 9.1.1 Never Use Reserved Keywords as Identifiers
+
+Asymptote reserves several keywords that **must not** appear as variable names, parameter names, or function names. Using them causes cryptic compile errors that don't clearly identify the problem.
+
+**Full reserved word list:**
+
+| Category | Keywords |
+|----------|----------|
+| Conditional | `if`, `else` |
+| Loop | `while`, `for`, `do`, `break`, `continue` |
+| Return | `return` |
+| Declaration | `struct`, `typedef`, `using` |
+| Object | `new`, `operator`, `this`, `explicit` |
+| Import | `import`, `include`, `access`, **`from`**, `unravel`, `quote` |
+
+> ⚠️ **`from` is the most common accidental violation.** It looks natural as a parameter name (`pair fromDir`, `real from`) but `from` is a keyword used in `from module access symbol;`. Always choose an alternative.
+
+**Safe alternatives:**
+
+| Avoid | Use instead | Why |
+|-------|-------------|-----|
+| `from` | `src`, `origin`, `startDir` | `from` is an import keyword |
+| `to` | `tgt`, `dest`, `endDir` | `to` is not reserved but pairs confusingly with `from` |
+| `new` | `fresh`, `created` | `new` is an allocation keyword |
+| `access` | `entry`, `retrieval` | `access` is an import keyword |
+| `include` | `embed`, `insert` | `include` is an import keyword |
+
+**Bad — `from` is a keyword:**
+```asy
+void arrowCurve(picture dest, picture src, pair fromDir,
+                picture to, pair toDir) {
+    pair a = point(src, fromDir) + gap * fromDir;  // COMPILE ERROR
+}
+```
+
+**Good:**
+```asy
+void arrowCurve(picture dest, picture src, pair srcDir,
+                picture tgt, pair tgtDir) {
+    pair a = point(src, srcDir) + gap * srcDir;    // OK
+}
+```
+
 ### 9.2 Avoid Magic Numbers — Use Named Constants
 
 **Good:**
