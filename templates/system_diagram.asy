@@ -9,6 +9,7 @@
 // ------------------------------------------
 real bw         = 3.8;
 real bh         = 1.2;
+real lineDy     = 0.36;
 real gap        = 0.2;
 real dx         = 4.5;
 real yTop       = 3.5;
@@ -27,21 +28,20 @@ pen dispatchPen  = gray + linewidth(0.7) + dashed;
 // ------------------------------------------
 // NODE COMPONENT — returns picture centered at origin
 // ------------------------------------------
-picture label_box_pic(real bw, real bh, string[] lines,
+picture label_box_pic(real bw, real bh, real lineDy, string[] lines,
                       pen fillPen, pen borderPen) {
     picture pic;
     fill(pic, box((-bw/2, -bh/2), (bw/2, bh/2)), fillPen);
     draw(pic, box((-bw/2, -bh/2), (bw/2, bh/2)), borderPen);
-    real lineDy = 0.36;
     real y0 = (lines.length - 1) * lineDy / 2;
     for (int i = 0; i < lines.length; ++i)
-        label(pic, lines[i], (0, y0 - i * lineDy), fontsize(7pt));
+        label(pic, lines[i], (0, y0 - i * 1.3lineDy), fontsize(9pt));
     return pic;
 }
 
-picture label_box_pic(real bw, real bh, string text,
+picture label_box_pic(real bw, real bh, real lineDy, string text,
                       pen fillPen, pen borderPen) {
-    return label_box_pic(bw, bh, new string[]{text}, fillPen, borderPen);
+    return label_box_pic(bw, bh, lineDy, new string[]{text}, fillPen, borderPen);
 }
 
 // ------------------------------------------
@@ -50,13 +50,13 @@ picture label_box_pic(real bw, real bh, string text,
 real xStart = -11;
 
 // --- Create and position nodes ---
-picture pUser    = shift(xStart,            yTop)        * label_box_pic(bw, bh, new string[]{"User", "Client Application"}, userColor, userBorder);
-picture pGateway = shift(xStart + dx,       yTop)        * label_box_pic(bw, bh, new string[]{"Gateway", "Auth, Routing"}, gatewayColor, gatewayBorder);
-picture pRouter  = shift(xStart + 3.25*dx,  yTop - 1.5) * label_box_pic(bw, bh, new string[]{"Router", "Load Balancer"}, routerColor, routerBorder);
-picture pWorker1 = shift(xStart + 2*dx,   yBot)        * label_box_pic(bw, bh, new string[]{"Worker 1", "CPU Tasks"}, workerColor, workerBorder);
-picture pWorkerDot = shift(xStart + 3.25*dx,   yBot)        * label_box_pic(bw, bh, new string[]{"Worker ...", "CPU Tasks"}, workerColor, workerBorder);
-picture pWorker2 = shift(xStart + 4.5*dx,   yBot)        * label_box_pic(bw, bh, new string[]{"Worker N", "GPU Tasks"}, workerColor, workerBorder);
-picture pResult  = shift(xStart + 6.0*dx,   (yTop+yBot)/2) * label_box_pic(bw, bh, new string[]{"Result", "Output"}, resultColor, resultBorder);
+picture pUser    = shift(xStart,            yTop)        * label_box_pic(bw, bh, lineDy, new string[]{"User", "Client"}, userColor, userBorder);
+picture pGateway = shift(xStart + dx,       yTop)        * label_box_pic(bw, bh, lineDy, new string[]{"Gateway", "Auth, Routing"}, gatewayColor, gatewayBorder);
+picture pRouter  = shift(xStart + 3.25*dx,  yTop - 1.5) * label_box_pic(bw, bh, lineDy, new string[]{"Router", "Load Balancer"}, routerColor, routerBorder);
+picture pWorker1 = shift(xStart + 2*dx,   yBot)        * label_box_pic(bw, bh, lineDy, new string[]{"Worker 1", "GPU Tasks"}, workerColor, workerBorder);
+picture pWorkerDot = shift(xStart + 3.25*dx,   yBot)        * label_box_pic(bw, bh, lineDy, new string[]{"Worker ...", "GPU Tasks"}, workerColor, workerBorder);
+picture pWorker2 = shift(xStart + 4.5*dx,   yBot)        * label_box_pic(bw, bh, lineDy, new string[]{"Worker N", "GPU Tasks"}, workerColor, workerBorder);
+picture pResult  = shift(xStart + 6.0*dx,   (yTop+yBot)/2) * label_box_pic(bw, bh, lineDy, new string[]{"Result", "Output"}, resultColor, resultBorder);
 
 // ------------------------------------------
 // ASSEMBLE DIAGRAM

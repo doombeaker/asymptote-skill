@@ -72,7 +72,7 @@ picture label_box_pic(real bw, real bh, real lineDy,
     draw(pic, box((-bw/2, -bh/2), (bw/2, bh/2)), borderPen);
     real y0 = (lines.length - 1) * lineDy / 2;
     for (int i = 0; i < lines.length; ++i)
-        label(pic, lines[i], (0, y0 - i * lineDy), fontsize(7pt));
+        label(pic, lines[i], (0, y0 - i * lineDy), fontsize(9pt));
     return pic;
 }
 

@@ -54,14 +54,13 @@ The fundamental unit. A `picture`-returning function that draws a labeled box ce
 // ==========================================
 // NODE COMPONENT — returns a picture at origin
 // ==========================================
-picture label_box_pic(real bw, real bh, string[] lines,
+picture label_box_pic(real bw, real bh, real lineDy, string[] lines,
                       pen fillPen, pen borderPen) {
     picture pic;
     pair bl = (-bw/2, -bh/2);
     pair tr = ( bw/2,  bh/2);
     fill(pic, box(bl, tr), fillPen);
     draw(pic, box(bl, tr), borderPen);
-    real lineDy = 0.32;
     real y0 = (lines.length - 1) * lineDy / 2;
     for (int i = 0; i < lines.length; ++i)
         label(pic, lines[i], (0, y0 - i * lineDy), fontsize(9pt));
@@ -69,9 +68,9 @@ picture label_box_pic(real bw, real bh, string[] lines,
 }
 
 // Single-line overload
-picture label_box_pic(real bw, real bh, string text,
+picture label_box_pic(real bw, real bh, real lineDy, string text,
                       pen fillPen, pen borderPen) {
-    return label_box_pic(bw, bh, new string[]{text}, fillPen, borderPen);
+    return label_box_pic(bw, bh, lineDy, new string[]{text}, fillPen, borderPen);
 }
 ```
 
@@ -80,8 +79,8 @@ picture label_box_pic(real bw, real bh, string text,
 ```asy
 real bw = 3.0, bh = 0.9;
 
-picture box1 = shift(0, 2)    * label_box_pic(bw, bh, "Gateway", gatewayFill, gatewayBorder);
-picture box2 = shift(0, -1)   * label_box_pic(bw, bh, new string[]{"Pod 1", "Agent + UI"}, workerFill, workerBorder);
+picture box1 = shift(0, 2)    * label_box_pic(bw, bh, 0.32, "Gateway", gatewayFill, gatewayBorder);
+picture box2 = shift(0, -1)   * label_box_pic(bw, bh, 0.32, new string[]{"Pod 1", "Agent + UI"}, workerFill, workerBorder);
 
 picture diagram;
 add(diagram, box1);
@@ -103,8 +102,8 @@ Arrow helpers take `picture` arguments and use `point()` to find boundary anchor
 // ==========================================
 
 // Vertical arrow: top node's south → bottom node's north
-void arrowV(picture dest, picture top, picture bot,
-            real gap=0.2, pen p=currentpen) {
+void arrowDown(picture dest, picture top, picture bot,
+               real gap=0.2, pen p=currentpen) {
     pair a = point(top, S) + (0, -gap);
     pair b = point(bot, N) + (0,  gap);
     draw(dest, a -- b, arrow = Arrow(TeXHead), p);
@@ -158,6 +157,21 @@ void arrowCurve(picture dest, picture src, pair srcDir,
 ```
 
 **Why `Arrow(TeXHead)`?** It produces clean, small arrowheads that don't overwhelm the diagram. The default `Arrow` can be too large and intrusive.
+
+**Closure variant:** In the complete examples (§5, §7, §8) and templates, these helpers are often simplified as closures that capture `gap` and `arrowPen` from the configuration section:
+
+```asy
+pen arrowPen = rgb(0.30, 0.20, 0.10) + linewidth(0.9);
+real gap = 0.25;
+
+void arrowDown(picture dest, picture top, picture bot) {
+    pair a = point(top, S) + (0, -gap);
+    pair b = point(bot, N) + (0,  gap);
+    draw(dest, a -- b, arrow = Arrow(TeXHead), arrowPen);
+}
+```
+
+This is more concise for config-driven diagrams. Use whichever style fits your project.
 
 **When to use straight vs. curved arrows:**
 
@@ -242,7 +256,7 @@ For sequential workflows with parallel branches.
 // ==========================================
 // VERTICAL WORKFLOW WITH PARALLEL BRANCHES
 // ==========================================
-real bw = 3.0, bh = 0.9, gap = 0.2;
+real bw = 3.0, bh = 0.9, lineDy = 0.32, gap = 0.2;
 real xMain = 0, xLeft = -2.8, xRight = 2.8, yTop = 0, dy = 1.6;
 
 // Colors (abbreviated — use full palette from §4)
@@ -252,18 +266,18 @@ pen cookFill = rgb(1.00, 0.92, 0.85), cookBorder = rgb(0.60, 0.35, 0.15) + linew
 pen arrowPen = rgb(0.30, 0.20, 0.10) + linewidth(0.9);
 
 // --- Create and position nodes ---
-picture pStart = shift(xMain,  yTop)          * label_box_pic(bw, bh, "Start", doneFill, doneBorder);
-picture pPrep  = shift(xMain,  yTop - dy)     * label_box_pic(bw, bh, new string[]{"Prep", "wash & measure"}, prepFill, prepBorder);
-picture pCut   = shift(xLeft,  yTop - 2*dy)   * label_box_pic(bw, bh, "Cut", prepFill, prepBorder);
-picture pBeat  = shift(xRight, yTop - 2*dy)   * label_box_pic(bw, bh, "Beat", prepFill, prepBorder);
-picture pCook  = shift(xMain,  yTop - 3*dy)   * label_box_pic(bw, bh, "Cook", cookFill, cookBorder);
+picture pStart = shift(xMain,  yTop)          * label_box_pic(bw, bh, lineDy, "Start", doneFill, doneBorder);
+picture pPrep  = shift(xMain,  yTop - dy)     * label_box_pic(bw, bh, lineDy, new string[]{"Prep", "wash & measure"}, prepFill, prepBorder);
+picture pCut   = shift(xLeft,  yTop - 2*dy)   * label_box_pic(bw, bh, lineDy, "Cut", prepFill, prepBorder);
+picture pBeat  = shift(xRight, yTop - 2*dy)   * label_box_pic(bw, bh, lineDy, "Beat", prepFill, prepBorder);
+picture pCook  = shift(xMain,  yTop - 3*dy)   * label_box_pic(bw, bh, lineDy, "Cook", cookFill, cookBorder);
 
 // --- Assemble ---
 picture diagram;
 size(diagram, 10cm);
 
 // Arrows (drawn first → behind nodes)
-arrowV(diagram, pStart, pPrep, gap, arrowPen);       // Start → Prep
+arrowDown(diagram, pStart, pPrep, gap, arrowPen);       // Start → Prep
 arrowBranch(diagram, pPrep, pCut, pBeat, gap, arrowPen);  // Prep → Cut, Beat
 arrowJoinLeft(diagram, pCut, pCook, gap, arrowPen);   // Cut → Cook
 arrowJoinRight(diagram, pBeat, pCook, gap, arrowPen); // Beat → Cook
@@ -286,7 +300,7 @@ For sequential data flow: ingest → process → output.
 // ==========================================
 // HORIZONTAL PIPELINE
 // ==========================================
-real bw = 3.0, bh = 0.9, gap = 0.2;
+real bw = 3.0, bh = 0.9, lineDy = 0.32, gap = 0.2;
 real yMain = 0, dx = 4.0, xStart = -6;
 
 // Colors
@@ -297,10 +311,10 @@ pen resFill  = rgb(0.9, 1.0, 0.95),      resBorder  = rgb(0.2, 0.5, 0.4) + linew
 pen arrowPen = rgb(0.2, 0.2, 0.2) + linewidth(0.9);
 
 // --- Create and position nodes ---
-picture pUser    = shift(xStart,        yMain) * label_box_pic(bw, bh, "User",    userFill, userBorder);
-picture pGateway = shift(xStart + dx,   yMain) * label_box_pic(bw, bh, "Gateway", gateFill, gateBorder);
-picture pCore    = shift(xStart + 2*dx, yMain) * label_box_pic(bw, bh, "Core",    workFill, workBorder);
-picture pResult  = shift(xStart + 3*dx, yMain) * label_box_pic(bw, bh, "Result",  resFill,  resBorder);
+picture pUser    = shift(xStart,        yMain) * label_box_pic(bw, bh, lineDy, "User",    userFill, userBorder);
+picture pGateway = shift(xStart + dx,   yMain) * label_box_pic(bw, bh, lineDy, "Gateway", gateFill, gateBorder);
+picture pCore    = shift(xStart + 2*dx, yMain) * label_box_pic(bw, bh, lineDy, "Core",    workFill, workBorder);
+picture pResult  = shift(xStart + 3*dx, yMain) * label_box_pic(bw, bh, lineDy, "Result",  resFill,  resBorder);
 
 // --- Assemble ---
 picture diagram;
@@ -326,7 +340,7 @@ For systems with a router dispatching to multiple workers inside a cluster.
 // ==========================================
 // CLUSTER WITH DISPATCH
 // ==========================================
-real bw = 3.0, bh = 0.9, gap = 0.2;
+real bw = 3.0, bh = 0.9, lineDy = 0.32, gap = 0.2;
 
 pen routerFill  = rgb(0.85, 1.0, 0.9),  routerBorder = rgb(0.15, 0.45, 0.3) + linewidth(1.2);
 pen workerFill  = rgb(1.0, 0.95, 0.8),  workerBorder = rgb(0.5, 0.4, 0.15) + linewidth(1.2);
@@ -334,10 +348,10 @@ pen clusterFill = rgb(0.96, 0.96, 1.0), clusterPen   = rgb(0.3, 0.3, 0.6) + line
 pen dispatchPen = gray + linewidth(0.7) + dashed;
 
 // Nodes inside the cluster
-picture pRouter = shift(5.5, -0.5) * label_box_pic(bw, bh, new string[]{"Router", "Unique Instance"}, routerFill, routerBorder);
-picture pPod1   = shift(3.0, -2.5) * label_box_pic(bw, bh, new string[]{"Pod 1", "Agent + UI"}, workerFill, workerBorder);
-picture pPod2   = shift(5.5, -2.5) * label_box_pic(bw, bh, new string[]{"Pod 2", "Agent + UI"}, workerFill, workerBorder);
-picture pPod3   = shift(8.0, -2.5) * label_box_pic(bw, bh, new string[]{"Pod N", "Agent + UI"}, workerFill, workerBorder);
+picture pRouter = shift(5.5, -0.5) * label_box_pic(bw, bh, lineDy, new string[]{"Router", "Unique Instance"}, routerFill, routerBorder);
+picture pPod1   = shift(3.0, -2.5) * label_box_pic(bw, bh, lineDy, new string[]{"Pod 1", "Agent + UI"}, workerFill, workerBorder);
+picture pPod2   = shift(5.5, -2.5) * label_box_pic(bw, bh, lineDy, new string[]{"Pod 2", "Agent + UI"}, workerFill, workerBorder);
+picture pPod3   = shift(8.0, -2.5) * label_box_pic(bw, bh, lineDy, new string[]{"Pod N", "Agent + UI"}, workerFill, workerBorder);
 
 picture diagram;
 size(diagram, 12cm);
@@ -428,6 +442,7 @@ This example demonstrates a full system architecture diagram — layered compone
 // ------------------------------------------
 real bw         = 3.8;
 real bh         = 1.2;
+real lineDy     = 0.36;
 real gap        = 0.2;
 real dx         = 4.5;
 real yTop       = 3.5;
@@ -448,33 +463,32 @@ pen dispatchPen  = gray + linewidth(0.7) + dashed;
 // ------------------------------------------
 // NODE COMPONENT
 // ------------------------------------------
-picture label_box_pic(real bw, real bh, string[] lines,
+picture label_box_pic(real bw, real bh, real lineDy, string[] lines,
                       pen fillPen, pen borderPen) {
     picture pic;
     fill(pic, box((-bw/2, -bh/2), (bw/2, bh/2)), fillPen);
     draw(pic, box((-bw/2, -bh/2), (bw/2, bh/2)), borderPen);
-    real lineDy = 0.36;
     real y0 = (lines.length - 1) * lineDy / 2;
     for (int i = 0; i < lines.length; ++i)
         label(pic, lines[i], (0, y0 - i * lineDy), fontsize(9pt));
     return pic;
 }
 
-picture label_box_pic(real bw, real bh, string text,
+picture label_box_pic(real bw, real bh, real lineDy, string text,
                       pen fillPen, pen borderPen) {
-    return label_box_pic(bw, bh, new string[]{text}, fillPen, borderPen);
+    return label_box_pic(bw, bh, lineDy, new string[]{text}, fillPen, borderPen);
 }
 
 // ------------------------------------------
 // CREATE AND POSITION NODES
 // ------------------------------------------
-picture pUser    = shift(xStart,          yTop)        * label_box_pic(bw, bh, new string[]{"User", "bizyair.cn Canvas"}, userColor, userBorder);
-picture pSCX     = shift(xStart + dx,     yTop)        * label_box_pic(bw, bh, new string[]{"SCX Gateway", "Auth, Quota, Billing"}, gatewayColor, gatewayBorder);
-picture pCGR     = shift(xStart + 3*dx,   yTop - 1.5) * label_box_pic(bw, bh, new string[]{"CGR Router", "Unique Instance"}, routerColor, routerBorder);
-picture pPod1    = shift(xStart + 2.5*dx, yBot)        * label_box_pic(bw, bh, new string[]{"Pod 1", "ComfyAgent + ComfyUI"}, podColor, podBorder);
-picture pPod2    = shift(xStart + 3.5*dx, yBot)        * label_box_pic(bw, bh, new string[]{"Pod 2", "ComfyAgent + ComfyUI"}, podColor, podBorder);
-picture pPodN    = shift(xStart + 5.5*dx, yBot)        * label_box_pic(bw, bh, new string[]{"Pod N", "ComfyAgent + ComfyUI"}, podColor, podBorder);
-picture pResult  = shift(xStart + 7.0*dx, (yTop+yBot)/2) * label_box_pic(bw, bh, new string[]{"Result", "Image / Video / Data"}, resultColor, resultBorder);
+picture pUser    = shift(xStart,          yTop)        * label_box_pic(bw, bh, lineDy, new string[]{"User", "bizyair.cn Canvas"}, userColor, userBorder);
+picture pSCX     = shift(xStart + dx,     yTop)        * label_box_pic(bw, bh, lineDy, new string[]{"SCX Gateway", "Auth, Quota, Billing"}, gatewayColor, gatewayBorder);
+picture pCGR     = shift(xStart + 3*dx,   yTop - 1.5) * label_box_pic(bw, bh, lineDy, new string[]{"CGR Router", "Unique Instance"}, routerColor, routerBorder);
+picture pPod1    = shift(xStart + 2.5*dx, yBot)        * label_box_pic(bw, bh, lineDy, new string[]{"Pod 1", "ComfyAgent + ComfyUI"}, podColor, podBorder);
+picture pPod2    = shift(xStart + 3.5*dx, yBot)        * label_box_pic(bw, bh, lineDy, new string[]{"Pod 2", "ComfyAgent + ComfyUI"}, podColor, podBorder);
+picture pPodN    = shift(xStart + 5.5*dx, yBot)        * label_box_pic(bw, bh, lineDy, new string[]{"Pod N", "ComfyAgent + ComfyUI"}, podColor, podBorder);
+picture pResult  = shift(xStart + 7.0*dx, (yTop+yBot)/2) * label_box_pic(bw, bh, lineDy, new string[]{"Result", "Image / Video / Data"}, resultColor, resultBorder);
 
 // ------------------------------------------
 // ASSEMBLE DIAGRAM
@@ -574,6 +588,7 @@ A workflow diagram showing the steps of cooking tomato scrambled eggs, with para
 // ------------------------------------------
 real bw       = 3.0;
 real bh       = 0.9;
+real lineDy   = 0.32;
 real gap      = 0.25;
 real nodeDy   = 1.6;
 
@@ -593,21 +608,20 @@ pen arrowPen    = rgb(0.30, 0.20, 0.10) + linewidth(0.9);
 // ------------------------------------------
 // NODE COMPONENT — returns picture centered at origin
 // ------------------------------------------
-picture label_box_pic(real bw, real bh, string[] lines,
+picture label_box_pic(real bw, real bh, real lineDy, string[] lines,
                       pen fillPen, pen borderPen) {
     picture pic;
     fill(pic, box((-bw/2, -bh/2), (bw/2, bh/2)), fillPen);
     draw(pic, box((-bw/2, -bh/2), (bw/2, bh/2)), borderPen);
-    real lineDy = 0.32;
     real y0 = (lines.length - 1) * lineDy / 2;
     for (int i = 0; i < lines.length; ++i)
         label(pic, lines[i], (0, y0 - i * lineDy), fontsize(9pt));
     return pic;
 }
 
-picture label_box_pic(real bw, real bh, string text,
+picture label_box_pic(real bw, real bh, real lineDy, string text,
                       pen fillPen, pen borderPen) {
-    return label_box_pic(bw, bh, new string[]{text}, fillPen, borderPen);
+    return label_box_pic(bw, bh, lineDy, new string[]{text}, fillPen, borderPen);
 }
 
 // ------------------------------------------
@@ -647,16 +661,16 @@ void arrowJoinRight(picture dest, picture side, picture main) {
 // ------------------------------------------
 
 // --- Create and position nodes (shift baked into each picture) ---
-picture pStart  = shift(xMain,   y0)            * label_box_pic(bw, bh, "Start", doneFill, doneBorder);
-picture pPrep   = shift(xMain,   y0 - nodeDy)   * label_box_pic(bw, bh, new string[]{"Prep", "wash \& measure"}, prepFill, prepBorder);
-picture pCut    = shift(xLeftB,  y0 - 2*nodeDy) * label_box_pic(bw, bh, "Cut Tomato", prepFill, prepBorder);
-picture pBeat   = shift(xRightB, y0 - 2*nodeDy) * label_box_pic(bw, bh, "Beat Eggs", prepFill, prepBorder);
-picture pHeat   = shift(xMain,   y0 - 3*nodeDy) * label_box_pic(bw, bh, "Heat Oil", cookFill, cookBorder);
-picture pFryE   = shift(xMain,   y0 - 4*nodeDy) * label_box_pic(bw, bh, "Fry Eggs", cookFill, cookBorder);
-picture pFryT   = shift(xMain,   y0 - 5*nodeDy) * label_box_pic(bw, bh, "Fry Tomato", cookFill, cookBorder);
-picture pMix    = shift(xMain,   y0 - 6*nodeDy) * label_box_pic(bw, bh, "Mix", cookFill, cookBorder);
-picture pSeason = shift(xMain,   y0 - 7*nodeDy) * label_box_pic(bw, bh, "Season", cookFill, cookBorder);
-picture pDone   = shift(xMain,   y0 - 8*nodeDy) * label_box_pic(bw, bh, "Serve", doneFill, doneBorder);
+picture pStart  = shift(xMain,   y0)            * label_box_pic(bw, bh, lineDy, "Start", doneFill, doneBorder);
+picture pPrep   = shift(xMain,   y0 - nodeDy)   * label_box_pic(bw, bh, lineDy, new string[]{"Prep", "wash \& measure"}, prepFill, prepBorder);
+picture pCut    = shift(xLeftB,  y0 - 2*nodeDy) * label_box_pic(bw, bh, lineDy, "Cut Tomato", prepFill, prepBorder);
+picture pBeat   = shift(xRightB, y0 - 2*nodeDy) * label_box_pic(bw, bh, lineDy, "Beat Eggs", prepFill, prepBorder);
+picture pHeat   = shift(xMain,   y0 - 3*nodeDy) * label_box_pic(bw, bh, lineDy, "Heat Oil", cookFill, cookBorder);
+picture pFryE   = shift(xMain,   y0 - 4*nodeDy) * label_box_pic(bw, bh, lineDy, "Fry Eggs", cookFill, cookBorder);
+picture pFryT   = shift(xMain,   y0 - 5*nodeDy) * label_box_pic(bw, bh, lineDy, "Fry Tomato", cookFill, cookBorder);
+picture pMix    = shift(xMain,   y0 - 6*nodeDy) * label_box_pic(bw, bh, lineDy, "Mix", cookFill, cookBorder);
+picture pSeason = shift(xMain,   y0 - 7*nodeDy) * label_box_pic(bw, bh, lineDy, "Season", cookFill, cookBorder);
+picture pDone   = shift(xMain,   y0 - 8*nodeDy) * label_box_pic(bw, bh, lineDy, "Serve", doneFill, doneBorder);
 
 // --- Assemble ---
 picture diagram;
