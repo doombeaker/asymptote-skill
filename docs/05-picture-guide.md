@@ -26,6 +26,99 @@ Adjust position or angle via `shift(t) * pic`, `rotate(a) * pic`, etc. These ret
 
 ---
 
+## `point()`: Querying Picture Boundary Anchors
+
+When composing sub-pictures into a diagram, you often need to know where a sub-picture's edges are — to draw arrows between nodes, align labels, or position adjacent elements. Instead of manually tracking box dimensions and computing `center ± half_width`, Asymptote provides `point()`.
+
+### Function Signature
+
+```
+pair point(picture pic=currentpicture, pair dir, bool user=true);
+```
+
+Returns the point on `pic`'s bounding box in the direction `dir` relative to its center. With `user=true` (the default), the returned value is in user coordinates.
+
+### Compass Direction Constants
+
+Asymptote predefines standard compass directions as `pair` constants in the `plain` module:
+
+| Constant | Value | Meaning |
+|----------|-------|---------|
+| `N` | `(0, 1)` | North (top center) |
+| `S` | `(0, -1)` | South (bottom center) |
+| `E` | `(1, 0)` | East (right center) |
+| `W` | `(-1, 0)` | West (left center) |
+| `NE` | `unit(N+E)` | Northeast corner |
+| `NW` | `unit(N+W)` | Northwest corner |
+| `SE` | `unit(S+E)` | Southeast corner |
+| `SW` | `unit(S+W)` | Southwest corner |
+
+Any `pair` can be used as a direction — `point(pic, (1, 2))` returns the boundary point toward (1,2) from center. If your variable shadows a direction constant (e.g., `real E = 2.718`), use `plain.E` to access the original.
+
+### Core Workflow: Create → Shift → Point → Draw
+
+```asy
+// 1. CREATE: component function draws at origin, returns a picture
+picture makeNode(string text, real bw, real bh, pen fillPen, pen borderPen) {
+    picture pic;
+    fill(pic, box((-bw/2, -bh/2), (bw/2, bh/2)), fillPen);
+    draw(pic, box((-bw/2, -bh/2), (bw/2, bh/2)), borderPen);
+    label(pic, text, fontsize(9pt));
+    return pic;
+}
+
+// 2. SHIFT: position each instance in the parent coordinate system
+real bw = 3, bh = 1;
+picture nodeA = shift(0,  2) * makeNode("Upper", bw, bh, lightblue, blue);
+picture nodeB = shift(0, -1) * makeNode("Lower", bw, bh, lightgreen, green);
+
+// 3. POINT: query boundary anchors — no manual bh/2 needed
+pair aSouth = point(nodeA, S);   // bottom edge of nodeA
+pair bNorth = point(nodeB, N);   // top edge of nodeB
+
+// 4. DRAW: connect with arrows, then add nodes
+picture final;
+size(final, 10cm);
+
+draw(final, aSouth -- bNorth, arrow = Arrow(TeXHead));
+add(final, nodeA);
+add(final, nodeB);
+
+shipout(final);
+```
+
+**Why the draw-before-add order?** Drawing arrows first and adding nodes second places arrows behind nodes visually. Since `point()` coordinates are valid regardless of add order, you can also reverse the order if you prefer arrows on top.
+
+### Adding Gaps
+
+`point()` returns the exact edge. For visual breathing room, add a small offset in the appropriate direction:
+
+```asy
+real gap = 0.25;
+pair start = point(topNode, S) + (0, -gap);   // slightly below south edge
+pair end   = point(botNode, N) + (0,  gap);   // slightly above north edge
+draw(dest, start -- end, arrow = Arrow(TeXHead));
+```
+
+### `point()` vs Manual Calculation
+
+| Approach | Moving a node | Different box sizes | Code clarity |
+|----------|--------------|---------------------|-------------|
+| `center.y - bh/2 - gap` | Must update every arrow | Must know each node's `bh` | Scattered magic numbers |
+| `point(node, S) - (0, gap)` | Just change `shift()` | Automatic | Self-documenting |
+
+### Related Functions
+
+```
+pair min(picture pic, user=true);   // bottom-left corner of bounding box
+pair max(picture pic, user=true);   // top-right corner of bounding box
+pair size(picture pic, user=true);  // (width, height) of bounding box
+```
+
+Useful for centering a picture: `shift(-min(pic, true)) * pic` shifts so the bottom-left corner is at origin.
+
+---
+
 ## Scenario 1: Encapsulate Graphics into Reusable Components
 
 ### When to Use
@@ -409,6 +502,7 @@ add(scene, shift(pos) * subPic);
 | Subplots side by side | `add(dest, shift(pos) * src)` |
 | Unified coordinates | `add(dest, src)` (no fit) |
 | Query size | `size(pic)`, `min(pic)`, `max(pic)` |
+| Query boundary anchor | `point(pic, dir)` where `dir` is `N`/`S`/`E`/`W`/`NE`/etc. |
 | Control output | `size(pic, 5cm); shipout(pic);` |
 
 ---

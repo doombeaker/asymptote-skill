@@ -1,49 +1,47 @@
 // ==========================================
 // TEMPLATE: System Architecture Diagram
 // Layers, clusters, dispatch lines, and annotations
+// Uses picture + point() pattern for modular composition
 // ==========================================
-unitsize(1.0cm);
 
 // ------------------------------------------
 // CONFIGURATION
 // ------------------------------------------
-real bw       = 3.8;
-real bh       = 1.2;
-real gap      = 0.2;
-real dx       = 4.5;
-real yTop     = 3.5;
-real yBot     = -3.5;
+real bw         = 3.8;
+real bh         = 1.2;
+real gap        = 0.2;
+real dx         = 4.5;
+real yTop       = 3.5;
+real yBot       = -3.5;
 
-pen userColor    = rgb(0.90, 0.95, 1.00);
-pen gatewayColor = rgb(1.00, 0.95, 0.85);
-pen workerColor  = rgb(1.00, 0.95, 0.75);
-pen resultColor  = rgb(0.85, 1.00, 0.95);
+pen userColor    = rgb(0.90, 0.95, 1.00);  pen userBorder    = black + 1.2pt;
+pen gatewayColor = rgb(1.00, 0.95, 0.85);  pen gatewayBorder = black + 1.2pt;
+pen routerColor  = rgb(0.85, 1.00, 0.90);  pen routerBorder  = black + 1.2pt;
+pen workerColor  = rgb(1.00, 0.95, 0.75);  pen workerBorder  = black + 1.2pt;
+pen resultColor  = rgb(0.85, 1.00, 0.95);  pen resultBorder  = black + 1.2pt;
 pen clusterFill  = rgb(0.96, 0.96, 0.99);
 pen clusterPen   = rgb(0.3, 0.3, 0.6) + linewidth(1.8);
 pen arrowPen     = rgb(0.2, 0.2, 0.2) + linewidth(0.9);
 pen dispatchPen  = gray + linewidth(0.7) + dashed;
 
 // ------------------------------------------
-// HELPERS
+// NODE COMPONENT — returns picture centered at origin
 // ------------------------------------------
-void boxLabel(pair c, string[] lines, pen fillpen) {
-    pair bl = c + (-bw/2, -bh/2);
-    pair tr = c + ( bw/2,  bh/2);
-    fill(box(bl, tr), fillpen);
-    draw(box(bl, tr), black + 1.2pt);
+picture label_box_pic(real bw, real bh, string[] lines,
+                      pen fillPen, pen borderPen) {
+    picture pic;
+    fill(pic, box((-bw/2, -bh/2), (bw/2, bh/2)), fillPen);
+    draw(pic, box((-bw/2, -bh/2), (bw/2, bh/2)), borderPen);
     real lineDy = 0.36;
-    real y0 = c.y + (lines.length - 1) * lineDy / 2;
+    real y0 = (lines.length - 1) * lineDy / 2;
     for (int i = 0; i < lines.length; ++i)
-        label(lines[i], (c.x, y0 - i * lineDy), fontsize(9pt));
+        label(pic, lines[i], (0, y0 - i * lineDy), fontsize(7pt));
+    return pic;
 }
 
-void boxLabel(pair c, string text, pen fillpen) {
-    boxLabel(c, new string[]{text}, fillpen);
-}
-
-void arrH(pair leftBox, pair rightBox) {
-    draw((leftBox.x + bw/2 + gap, leftBox.y) -- (rightBox.x - bw/2 - gap, rightBox.y),
-         arrow = Arrow(TeXHead), linewidth(0.9));
+picture label_box_pic(real bw, real bh, string text,
+                      pen fillPen, pen borderPen) {
+    return label_box_pic(bw, bh, new string[]{text}, fillPen, borderPen);
 }
 
 // ------------------------------------------
@@ -51,61 +49,71 @@ void arrH(pair leftBox, pair rightBox) {
 // ------------------------------------------
 real xStart = -11;
 
-// --- Layer 1: User ---
-pair pUser = (xStart, yTop);
-boxLabel(pUser, new string[]{"User", "Client Application"}, userColor);
+// --- Create and position nodes ---
+picture pUser    = shift(xStart,            yTop)        * label_box_pic(bw, bh, new string[]{"User", "Client Application"}, userColor, userBorder);
+picture pGateway = shift(xStart + dx,       yTop)        * label_box_pic(bw, bh, new string[]{"Gateway", "Auth, Routing"}, gatewayColor, gatewayBorder);
+picture pRouter  = shift(xStart + 3.25*dx,  yTop - 1.5) * label_box_pic(bw, bh, new string[]{"Router", "Load Balancer"}, routerColor, routerBorder);
+picture pWorker1 = shift(xStart + 2*dx,   yBot)        * label_box_pic(bw, bh, new string[]{"Worker 1", "CPU Tasks"}, workerColor, workerBorder);
+picture pWorkerDot = shift(xStart + 3.25*dx,   yBot)        * label_box_pic(bw, bh, new string[]{"Worker ...", "CPU Tasks"}, workerColor, workerBorder);
+picture pWorker2 = shift(xStart + 4.5*dx,   yBot)        * label_box_pic(bw, bh, new string[]{"Worker N", "GPU Tasks"}, workerColor, workerBorder);
+picture pResult  = shift(xStart + 6.0*dx,   (yTop+yBot)/2) * label_box_pic(bw, bh, new string[]{"Result", "Output"}, resultColor, resultBorder);
 
-// --- Layer 2: Gateway ---
-pair pGateway = (xStart + dx, yTop);
-boxLabel(pGateway, new string[]{"Gateway", "Auth, Routing"}, gatewayColor);
-arrH(pUser, pGateway);
+// ------------------------------------------
+// ASSEMBLE DIAGRAM
+// ------------------------------------------
+picture diagram;
+size(diagram, 20cm);
 
-// --- Layer 3: Core Cluster (boxed group) ---
+// --- Cluster background (drawn first) ---
 pair cbl = (xStart + 2.0*dx - bw/2 - 0.3, yTop - 0.5);
 pair ctr = (xStart + 4.5*dx + bw/2 + 0.3, yBot - bh/2 - 1);
-fill(box(cbl, ctr), clusterFill);
-draw(box(cbl, ctr), clusterPen);
-label("Core Cluster", ((cbl.x + ctr.x)/2, ctr.y + 0.5),
+fill(diagram, box(cbl, ctr), clusterFill);
+draw(diagram, box(cbl, ctr), clusterPen);
+label(diagram, "Core Cluster", ((cbl.x + ctr.x)/2, ctr.y + 0.5),
       fontsize(11pt) + rgb(0.3, 0.3, 0.6));
 
-// Router inside cluster
-pair pRouter = (xStart + 3.25*dx, yTop - 1.5);
-boxLabel(pRouter, new string[]{"Router", "Load Balancer"}, gatewayColor);
+// --- Arrows (drawn before nodes → behind nodes) ---
 
-// Workers inside cluster
-pair pWorker1 = (xStart + 2.5*dx, yBot);
-pair pWorker2 = (xStart + 4.0*dx, yBot);
-boxLabel(pWorker1, new string[]{"Worker 1", "CPU Tasks"}, workerColor);
-boxLabel(pWorker2, new string[]{"Worker 2", "GPU Tasks"}, workerColor);
-
-// Dashed dispatch lines from router to workers
-pair routerBot = (pRouter.x, pRouter.y - bh/2 - gap);
-for (pair w : new pair[] {pWorker1, pWorker2}) {
-    pair wTop = (w.x, w.y + bh/2 + gap);
-    draw(routerBot -- (routerBot.x, routerBot.y - 0.8)
-              -- (wTop.x, routerBot.y - 0.8) -- wTop, dispatchPen);
-}
+// User → Gateway
+pair uEast = point(pUser, E) + (gap, 0);
+pair gWest = point(pGateway, W) + (-gap, 0);
+draw(diagram, uEast -- gWest, arrow = Arrow(TeXHead), arrowPen);
 
 // Gateway → Router (curved)
-pair gOut = (pGateway.x + bw/2 + gap, pGateway.y);
-pair rIn  = (pRouter.x - bw/2 - gap, pRouter.y);
-draw(gOut{E}..{E}rIn, arrow = Arrow(TeXHead), linewidth(0.9));
+pair gEast = point(pGateway, E) + (gap, 0);
+pair rWest = point(pRouter,  W) + (-gap, 0);
+draw(diagram, gEast{E}..{E}rWest, arrow = Arrow(TeXHead), arrowPen);
 
-// --- Layer 4: Result ---
-pair pResult = (xStart + 6.0*dx, (yTop + yBot)/2);
-boxLabel(pResult, new string[]{"Result", "Output"}, resultColor);
+// Router → Workers (dashed dispatch)
+pair routerSouth = point(pRouter, S) + (0, -gap);
+for (picture worker : new picture[] {pWorker1, pWorkerDot, pWorker2}) {
+    pair wNorth = point(worker, N) + (0, gap);
+    pair bend = (routerSouth.x, routerSouth.y - 0.8);
+    draw(diagram, routerSouth -- bend -- (wNorth.x, bend.y) -- wNorth,
+         dispatchPen);
+}
 
-// Workers → Result (curved)
-pair wRight = (pWorker2.x + bw/2 + gap, pWorker2.y);
-pair resLeft = (pResult.x - bw/2 - gap, pResult.y);
-draw(wRight{E}..{E}resLeft, arrow = Arrow(TeXHead), linewidth(0.9) + dashed);
+// Workers → Result (curved, dashed)
+pair w2East  = point(pWorker2, E) + (gap, 0);
+pair resWest = point(pResult,  W) + (-gap, 0);
+draw(diagram, w2East{E}..{E}resWest,
+     arrow = Arrow(TeXHead), arrowPen + dashed);
 
-// ------------------------------------------
-// ANNOTATIONS (optional)
-// ------------------------------------------
-real ySteps = yBot - 2.5;
-label("1. Request",  (pUser.x,    ySteps), fontsize(8pt));
-label("2. Auth",     (pGateway.x, ySteps), fontsize(8pt));
-label("3. Dispatch", (pRouter.x,  ySteps), fontsize(8pt));
-label("4. Process",  (pWorker1.x, ySteps), fontsize(8pt));
-label("5. Return",   (pResult.x,  ySteps), fontsize(8pt));
+// --- Add nodes on top of arrows ---
+add(diagram, pUser);
+add(diagram, pGateway);
+add(diagram, pRouter);
+add(diagram, pWorker1);
+add(diagram, pWorkerDot);
+add(diagram, pWorker2);
+add(diagram, pResult);
+
+// --- Step numbering ---
+real ySteps = point(pResult, S).y - 6;
+label(diagram, "1. Request",  (point(pUser,    S).x, ySteps), fontsize(8pt));
+label(diagram, "2. Auth",     (point(pGateway, S).x, ySteps), fontsize(8pt));
+label(diagram, "3. Dispatch", (point(pRouter,  S).x, ySteps), fontsize(8pt));
+label(diagram, "4. Process",  (point(pWorker2, S).x, ySteps), fontsize(8pt));
+label(diagram, "5. Return",   (point(pResult,  S).x, ySteps), fontsize(8pt));
+
+shipout(diagram);
