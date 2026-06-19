@@ -21,15 +21,17 @@ This skill enables the agent to generate high-quality technical vector graphics 
 
 ## Skill Structure
 
-This skill is organized into documentation files and ready-to-use templates:
+This skill is organized into documentation files, utility libraries, and ready-to-use templates:
 
 | File | Content |
 |------|---------|
 | `docs/01-basics.md` | Core language syntax, drawing primitives, paths, pens, transforms, coding standards |
 | `docs/02-geometry.md` | 2D geometric constructions using the `geometry` module |
 | `docs/03-scientific-graphs.md` | Scientific plotting with the `graph` module and `colormap` |
-| `docs/04-flowchart.md` | Flowchart construction using default Asymptote primitives |
+| `docs/04-flowchart.md` | Flowchart construction using default Asymptote primitives + skillutils |
 | `docs/05-picture-guide.md` | Practical `picture` composition guide: reusable components, transforms, subplots, overlays |
+| `docs/06-skillutils-reference.md` | Skillutils function reference with copy-paste-ready inline code blocks |
+| `lib/skillutils.asy` | Shared utility library: `label_box_pic`, `pics_bbox`, `pics_cluster` — `import skillutils;` |
 | `templates/` | Ready-to-use templates for common drawing types (see list below) |
 
 ### Templates
@@ -91,6 +93,10 @@ Asymptote supports multiple output formats:
 5. **Pens**: Control color, line width, dash pattern: `red+linewidth(1)+dashed`
 6. **Transforms**: `shift`, `scale`, `rotate`, `reflect`, `xscale`, `yscale`
 7. **Arrowheads**: `Arrow`, `Arrows`, `MidArrow`, with optional `arrowhead=` parameter
+
+**⚠️ Common Pen Mistakes (MUST read):**
+- **`gray` is NOT a predefined color constant** — it may cause compilation errors. Use `gray(0.5)` (function call) or `rgb(0.5, 0.5, 0.5)` instead. Never write bare `gray` as a pen.
+- **`bold` does NOT exist** as a pen attribute. For bold text, use LaTeX markup: `label("\textbf{Bold}", pos)`. Never write `fontsize(9pt) + bold`.
 
 ## Aesthetic Guidelines
 
@@ -256,6 +262,28 @@ label("$C$", pointC, NW);
 ### 6. Reusable Components as Functions
 
 For repeated visual elements (circuit symbols, custom arrows, grid nodes), define reusable functions rather than duplicating code.
+
+For flowchart/system diagrams specifically, use the shared `skillutils` library which provides:
+- **`label_box_pic(position, width, height, lineDy, lines, labelPen, fillPen, borderPen)`** — creates a positioned, styled label box as a `picture`
+- **`pics_bbox(pictures)`** — safely computes combined bounding box using `point()` (avoids `min()`/`max()` coordinate trap)
+- **`pics_cluster(pictures, padx, pady, fillPen, borderPen)`** — draws a background cluster box auto-sized from its contents
+
+**How to use `skillutils.asy`:** The library lives at `lib/skillutils.asy` within the skill. For `import skillutils;` to work, the file must be in Asymptote's search path. Either:
+1. Copy `lib/skillutils.asy` into the same directory as your `.asy` script, or
+2. Run Asymptote with `-dir <path-to-skill>/lib` to add the library directory to the search path
+
+When generating code, you MAY inline the `skillutils` functions directly into the output file if the user prefers a single-file solution. The copy-paste-ready code blocks are in `docs/06-skillutils-reference.md`.
+
+```asy
+import skillutils;
+
+pen textPen = fontsize(9pt);
+picture pStart = label_box_pic((0, 2), 3.0, 0.9, 0.32, "Start", textPen, startFill, startBorder);
+picture pProc  = label_box_pic((3, 0), 3.0, 0.9, 0.32, new string[]{"Process", "compute"}, textPen, procFill, procBorder);
+
+// Cluster background auto-sized from its contents
+picture bg = pics_cluster(new picture[]{pStart, pProc}, 0.4, 0.3, clusterFill, clusterPen);
+```
 
 ```asy
 // Reusable resistor symbol

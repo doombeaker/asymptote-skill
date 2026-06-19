@@ -7,6 +7,8 @@
 // ------------------------------------------
 // CONFIGURATION
 // ------------------------------------------
+import skillutils;
+
 real bw         = 3.8;
 real bh         = 1.2;
 real lineDy     = 0.36;
@@ -15,6 +17,7 @@ real dx         = 4.5;
 real yTop       = 3.5;
 real yBot       = -3.5;
 
+pen textPen     = fontsize(9pt);
 pen userColor    = rgb(0.90, 0.95, 1.00);  pen userBorder    = black + 1.2pt;
 pen gatewayColor = rgb(1.00, 0.95, 0.85);  pen gatewayBorder = black + 1.2pt;
 pen routerColor  = rgb(0.85, 1.00, 0.90);  pen routerBorder  = black + 1.2pt;
@@ -23,26 +26,7 @@ pen resultColor  = rgb(0.85, 1.00, 0.95);  pen resultBorder  = black + 1.2pt;
 pen clusterFill  = rgb(0.96, 0.96, 0.99);
 pen clusterPen   = rgb(0.3, 0.3, 0.6) + linewidth(1.8);
 pen arrowPen     = rgb(0.2, 0.2, 0.2) + linewidth(0.9);
-pen dispatchPen  = gray + linewidth(0.7) + dashed;
-
-// ------------------------------------------
-// NODE COMPONENT — returns picture centered at origin
-// ------------------------------------------
-picture label_box_pic(real bw, real bh, real lineDy, string[] lines,
-                      pen fillPen, pen borderPen) {
-    picture pic;
-    fill(pic, box((-bw/2, -bh/2), (bw/2, bh/2)), fillPen);
-    draw(pic, box((-bw/2, -bh/2), (bw/2, bh/2)), borderPen);
-    real y0 = (lines.length - 1) * lineDy / 2;
-    for (int i = 0; i < lines.length; ++i)
-        label(pic, lines[i], (0, y0 - i * 1.3lineDy), fontsize(9pt));
-    return pic;
-}
-
-picture label_box_pic(real bw, real bh, real lineDy, string text,
-                      pen fillPen, pen borderPen) {
-    return label_box_pic(bw, bh, lineDy, new string[]{text}, fillPen, borderPen);
-}
+pen dispatchPen  = gray(0.5) + linewidth(0.7) + dashed;
 
 // ------------------------------------------
 // TODO: Replace components with your system architecture
@@ -50,13 +34,13 @@ picture label_box_pic(real bw, real bh, real lineDy, string text,
 real xStart = -11;
 
 // --- Create and position nodes ---
-picture pUser    = shift(xStart,            yTop)        * label_box_pic(bw, bh, lineDy, new string[]{"User", "Client"}, userColor, userBorder);
-picture pGateway = shift(xStart + dx,       yTop)        * label_box_pic(bw, bh, lineDy, new string[]{"Gateway", "Auth, Routing"}, gatewayColor, gatewayBorder);
-picture pRouter  = shift(xStart + 3.25*dx,  yTop - 1.5) * label_box_pic(bw, bh, lineDy, new string[]{"Router", "Load Balancer"}, routerColor, routerBorder);
-picture pWorker1 = shift(xStart + 2*dx,   yBot)        * label_box_pic(bw, bh, lineDy, new string[]{"Worker 1", "GPU Tasks"}, workerColor, workerBorder);
-picture pWorkerDot = shift(xStart + 3.25*dx,   yBot)        * label_box_pic(bw, bh, lineDy, new string[]{"Worker ...", "GPU Tasks"}, workerColor, workerBorder);
-picture pWorker2 = shift(xStart + 4.5*dx,   yBot)        * label_box_pic(bw, bh, lineDy, new string[]{"Worker N", "GPU Tasks"}, workerColor, workerBorder);
-picture pResult  = shift(xStart + 6.0*dx,   (yTop+yBot)/2) * label_box_pic(bw, bh, lineDy, new string[]{"Result", "Output"}, resultColor, resultBorder);
+picture pUser    = label_box_pic((xStart,            yTop),        bw, bh, lineDy, new string[]{"User", "Client"}, textPen, userColor, userBorder);
+picture pGateway = label_box_pic((xStart + dx,       yTop),        bw, bh, lineDy, new string[]{"Gateway", "Auth, Routing"}, textPen, gatewayColor, gatewayBorder);
+picture pRouter  = label_box_pic((xStart + 3.25*dx,  yTop - 1.5), bw, bh, lineDy, new string[]{"Router", "Load Balancer"}, textPen, routerColor, routerBorder);
+picture pWorker1 = label_box_pic((xStart + 2*dx,     yBot),        bw, bh, lineDy, new string[]{"Worker 1", "GPU Tasks"}, textPen, workerColor, workerBorder);
+picture pWorkerDot = label_box_pic((xStart + 3.25*dx, yBot),       bw, bh, lineDy, new string[]{"Worker ...", "GPU Tasks"}, textPen, workerColor, workerBorder);
+picture pWorker2 = label_box_pic((xStart + 4.5*dx,   yBot),        bw, bh, lineDy, new string[]{"Worker N", "GPU Tasks"}, textPen, workerColor, workerBorder);
+picture pResult  = label_box_pic((xStart + 6.0*dx,   (yTop+yBot)/2), bw, bh, lineDy, new string[]{"Result", "Output"}, textPen, resultColor, resultBorder);
 
 // ------------------------------------------
 // ASSEMBLE DIAGRAM
@@ -65,12 +49,9 @@ picture diagram;
 size(diagram, 20cm);
 
 // --- Cluster background (drawn first) ---
-pair cbl = (xStart + 2.0*dx - bw/2 - 0.3, yTop - 0.5);
-pair ctr = (xStart + 4.5*dx + bw/2 + 0.3, yBot - bh/2 - 1);
-fill(diagram, box(cbl, ctr), clusterFill);
-draw(diagram, box(cbl, ctr), clusterPen);
-label(diagram, "Core Cluster", ((cbl.x + ctr.x)/2, ctr.y + 0.5),
-      fontsize(11pt) + rgb(0.3, 0.3, 0.6));
+picture bg = pics_cluster(new picture[]{pRouter, pWorker1, pWorkerDot, pWorker2}, 0.4, 0.5, clusterFill, clusterPen);
+add(diagram, bg);
+label(diagram, "Core Cluster", (point(bg, S).x, point(bg, S).y + 0.5), fontsize(11pt) + rgb(0.3, 0.3, 0.6));
 
 // --- Arrows (drawn before nodes → behind nodes) ---
 

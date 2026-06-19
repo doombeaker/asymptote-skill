@@ -15,7 +15,7 @@ real bh         = 0.95;     // Box height
 real lineDy     = 0.33;     // Line spacing inside box
 real gap        = 0.18;     // Arrow gap from box edge
 real dx         = 3.0;      // Horizontal step between adjacent nodes
-                           //   inter-box gap = dx - bw = 0.4
+                            //   inter-box gap = dx - bw = 0.4
 
 real rowDy      = 2.2;      // Vertical distance: main row ↔ upper/lower rows
 real xStart     = -22.5;    // X coordinate of leftmost node (≈ -7.5*dx for centering)
@@ -61,32 +61,19 @@ pen xuandeColor  = rgb(1.00, 0.90, 0.80);  pen xuandeBorder  = black + 1.0pt;
 pen endColor     = gray(0.90);              pen endBorder     = black + 1.0pt;
 pen arrowPen     = rgb(0.3, 0.2, 0.1) + linewidth(0.8);
 pen lightArrow   = rgb(0.3, 0.2, 0.1) + linewidth(0.6);
+pen textPen      = fontsize(9pt);
 
 // ==========================================
-// NODE COMPONENT
+// NODE COMPONENT — uses skillutils for label_box_pic
 // ==========================================
-picture label_box_pic(real bw, real bh, real lineDy,
-                      string[] lines, pen fillPen, pen borderPen) {
-    picture pic;
-    fill(pic, box((-bw/2, -bh/2), (bw/2, bh/2)), fillPen);
-    draw(pic, box((-bw/2, -bh/2), (bw/2, bh/2)), borderPen);
-    real y0 = (lines.length - 1) * lineDy / 2;
-    for (int i = 0; i < lines.length; ++i)
-        label(pic, lines[i], (0, y0 - i * lineDy), fontsize(9pt));
-    return pic;
-}
+import skillutils;
 
-picture label_box_pic(real bw, real bh, real lineDy,
-                      string text, pen fillPen, pen borderPen) {
-    return label_box_pic(bw, bh, lineDy, new string[]{text}, fillPen, borderPen);
+// Convenience wrapper using global bw/bh/lineDy and textPen
+picture box2(pair position, string[] lines, pen fillPen, pen borderPen) {
+    return label_box_pic(position, bw, bh, lineDy, lines, textPen, fillPen, borderPen);
 }
-
-// Convenience wrapper using global bw/bh/lineDy
-picture box2(string[] lines, pen fillPen, pen borderPen) {
-    return label_box_pic(bw, bh, lineDy, lines, fillPen, borderPen);
-}
-picture box2(string text, pen fillPen, pen borderPen) {
-    return box2(new string[]{text}, fillPen, borderPen);
+picture box2(pair position, string text, pen fillPen, pen borderPen) {
+    return box2(position, new string[]{text}, fillPen, borderPen);
 }
 
 // ==========================================
@@ -111,33 +98,33 @@ void arrowV(picture dest, picture src, pair srcDir,
 // ==========================================
 
 // --- Main timeline (Yongle Reign) ---
-picture pOrigin    = shift(xStart,          yMain) * box2(new string[]{"Origin", "Yunnan"}, earlyColor, earlyBorder);
-picture pService   = shift(xStart + dx,     yMain) * box2(new string[]{"Serve", "Prince Yan"}, earlyColor, earlyBorder);
-picture pV1        = shift(xStart + 2*dx,   yMain) * box2(new string[]{"1st Voyage", "1405-1407"}, voyageColor, voyageBorder);
-picture pV1ret     = shift(xStart + 3*dx,   yMain) * box2(new string[]{"Return", "Envoys"}, tributeColor, tributeBorder);
-picture pV2        = shift(xStart + 4*dx,   yMain) * box2(new string[]{"2nd Voyage", "1409-1411"}, voyageColor, voyageBorder);
-picture pV2ret     = shift(xStart + 5*dx,   yMain) * box2(new string[]{"Return", "Captives"}, battleColor, battleBorder);
-picture pV3        = shift(xStart + 6*dx,   yMain) * box2(new string[]{"3rd Voyage", "1413-1415"}, voyageColor, voyageBorder);
-picture pV3ret     = shift(xStart + 7*dx,   yMain) * box2(new string[]{"Return", "1415"}, tributeColor, tributeBorder);
-picture pV4        = shift(xStart + 8*dx,   yMain) * box2(new string[]{"4th Voyage", "1417-1419"}, tributeColor, tributeBorder);
-picture pV5        = shift(xStart + 9*dx,   yMain) * box2(new string[]{"5th Voyage", "1421-1422"}, voyageColor, voyageBorder);
-picture pV6        = shift(xStart + 10*dx,  yMain) * box2(new string[]{"6th Voyage", "1424"}, voyageColor, voyageBorder);
+picture pOrigin    = box2((xStart,          yMain), new string[]{"Origin", "Yunnan"}, earlyColor, earlyBorder);
+picture pService   = box2((xStart + dx,     yMain), new string[]{"Serve", "Prince Yan"}, earlyColor, earlyBorder);
+picture pV1        = box2((xStart + 2*dx,   yMain), new string[]{"1st Voyage", "1405-1407"}, voyageColor, voyageBorder);
+picture pV1ret     = box2((xStart + 3*dx,   yMain), new string[]{"Return", "Envoys"}, tributeColor, tributeBorder);
+picture pV2        = box2((xStart + 4*dx,   yMain), new string[]{"2nd Voyage", "1409-1411"}, voyageColor, voyageBorder);
+picture pV2ret     = box2((xStart + 5*dx,   yMain), new string[]{"Return", "Captives"}, battleColor, battleBorder);
+picture pV3        = box2((xStart + 6*dx,   yMain), new string[]{"3rd Voyage", "1413-1415"}, voyageColor, voyageBorder);
+picture pV3ret     = box2((xStart + 7*dx,   yMain), new string[]{"Return", "1415"}, tributeColor, tributeBorder);
+picture pV4        = box2((xStart + 8*dx,   yMain), new string[]{"4th Voyage", "1417-1419"}, tributeColor, tributeBorder);
+picture pV5        = box2((xStart + 9*dx,   yMain), new string[]{"5th Voyage", "1421-1422"}, voyageColor, voyageBorder);
+picture pV6        = box2((xStart + 10*dx,  yMain), new string[]{"6th Voyage", "1424"}, voyageColor, voyageBorder);
 
 // --- Battle branches (below main) ---
-picture pBattle1 = shift(xStart + 3*dx,  yLower) * box2(new string[]{"Old Port", "Chen Zuyi"}, battleColor, battleBorder);
-picture pBattle2 = shift(xStart + 4*dx,  yLower) * box2(new string[]{"Ceylon", "Capture king"}, battleColor, battleBorder);
-picture pBattle3 = shift(xStart + 6*dx,  yLower) * box2(new string[]{"Samudera", "Victory"}, battleColor, battleBorder);
+picture pBattle1 = box2((xStart + 3*dx,  yLower), new string[]{"Old Port", "Chen Zuyi"}, battleColor, battleBorder);
+picture pBattle2 = box2((xStart + 4*dx,  yLower), new string[]{"Ceylon", "Capture king"}, battleColor, battleBorder);
+picture pBattle3 = box2((xStart + 6*dx,  yLower), new string[]{"Samudera", "Victory"}, battleColor, battleBorder);
 
 // --- Transition: Yongle → Hongxi ---
-picture pTransition = shift(xStart + 11.5*dx, yMain) * box2(new string[]{"1425", "Guard Nanjing"}, hongxiColor, hongxiBorder);
+picture pTransition = box2((xStart + 11.5*dx, yMain), new string[]{"1425", "Guard Nanjing"}, hongxiColor, hongxiBorder);
 
 // --- Xuande: 7th Voyage ---
-picture pV7        = shift(xStart + 13*dx, yMain)  * box2(new string[]{"7th Voyage", "1433"}, xuandeColor, xuandeBorder);
-picture pV7detail  = shift(xStart + 13*dx, yUpper) * box2(new string[]{"17 States", "Hormuz"}, xuandeColor, xuandeBorder);
+picture pV7        = box2((xStart + 13*dx, yMain),  new string[]{"7th Voyage", "1433"}, xuandeColor, xuandeBorder);
+picture pV7detail  = box2((xStart + 13*dx, yUpper), new string[]{"17 States", "Hormuz"}, xuandeColor, xuandeBorder);
 
 // --- Legacy ---
-picture pLegacy        = shift(xStart + 15*dx, yMain)  * box2(new string[]{"Legacy", "7 Voyages"}, endColor, endBorder);
-picture pLegacyDetail  = shift(xStart + 15*dx, yUpper) * box2(new string[]{"30+ Countries", "Treasure Fleet"}, endColor, endBorder);
+picture pLegacy        = box2((xStart + 15*dx, yMain),  new string[]{"Legacy", "7 Voyages"}, endColor, endBorder);
+picture pLegacyDetail  = box2((xStart + 15*dx, yUpper), new string[]{"30+ Countries", "Treasure Fleet"}, endColor, endBorder);
 
 // ==========================================
 // ASSEMBLE DIAGRAM
@@ -152,7 +139,7 @@ label(diagram, "Zheng He: Seven Voyages (1405-1433) — Landscape Timeline",
 // --- Phase dividers ---
 label(diagram, "Yongle Reign (1405-1424)", (xStart + 5.5*dx, yDivider + dividerLbl), fontsize(10pt));
 draw(diagram, (xStart - 2, yDivider) -- (xStart + 17*dx, yDivider),
-     gray + linewidth(0.8) + dashed);
+     gray(0.5) + linewidth(0.8) + dashed);
 label(diagram, "Xuande Reign (1433)", (xStart + 13*dx, yDivider + dividerLbl), fontsize(10pt));
 
 // --- Arrows (drawn before nodes → behind nodes) ---

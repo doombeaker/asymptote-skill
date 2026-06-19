@@ -115,7 +115,15 @@ pair max(picture pic, user=true);   // top-right corner of bounding box
 pair size(picture pic, user=true);  // (width, height) of bounding box
 ```
 
-Useful for centering a picture: `shift(-min(pic, true)) * pic` shifts so the bottom-left corner is at origin.
+Useful for centering a picture that has been `add()`-ed to a sized parent: `shift(-min(pic, true)) * pic` shifts so the bottom-left corner is at origin.
+
+> **⚠️ Gotcha: `min()`/`max()` on standalone pictures**
+>
+> `min(pic)` and `max(pic)` return coordinates through the picture's `user → PS` transform. For a standalone sub-picture that has **never been `add()`-ed to a sized parent picture**, this transform is the PostScript bp identity — the returned coordinates are in an unrelated scale, not user coordinates.
+>
+> Use `point(pic, SW)` for bottom-left and `point(pic, NE)` for top-right instead. These compute boundary anchors from the picture's drawn content and stored transforms, returning correct user-coordinate values even for standalone pictures.
+>
+> The `skillutils` library provides `pics_bbox(picture[] pics)` which wraps this pattern safely — see `lib/skillutils.asy`.
 
 ---
 
@@ -265,8 +273,8 @@ picture map;
 size(map, 10cm);
 draw(map, (0, 0) -- (10, 0) -- (10, 10) -- (0, 10) -- cycle);
 for (int i = 0; i <= 10; ++i) {
-    draw(map, (i, 0) -- (i, 10), gray);
-    draw(map, (0, i) -- (10, i), gray);
+    draw(map, (i, 0) -- (i, 10), gray(0.5));
+    draw(map, (0, i) -- (10, i), gray(0.5));
 }
 
 // Marker component — drawn at origin, purely relative coordinates
@@ -403,7 +411,7 @@ picture map;
 size(map, 10cm);
 draw(map, (0, 0) -- (10, 0) -- (10, 10) -- (0, 10) -- cycle);
 for (int i = 0; i <= 10; ++i) {
-    draw(map, (i, 0) -- (i, 10), gray + 0.5);
+    draw(map, (i, 0) -- (i, 10), gray(0.5) + 0.5);
 }
 
 // Compass component — drawn at origin, purely relative coordinates
@@ -498,11 +506,13 @@ add(scene, shift(pos) * subPic);
 |------|---------|
 | Define component | `picture func(params) { picture pic; ...; return pic; }` |
 | Reuse component | `picture inst = func(args); add(scene, shift(pos) * inst);` |
+| Labeled box (skillutils) | `import skillutils; picture p = label_box_pic(pos, w, h, dy, text, textPen, fill, border);` |
 | Transform component | `rotate(45) * scale(2) * pic` |
 | Subplots side by side | `add(dest, shift(pos) * src)` |
 | Unified coordinates | `add(dest, src)` (no fit) |
-| Query size | `size(pic)`, `min(pic)`, `max(pic)` |
 | Query boundary anchor | `point(pic, dir)` where `dir` is `N`/`S`/`E`/`W`/`NE`/etc. |
+| Query bbox (safe) | `pics_bbox(pics)` from skillutils — returns `{bottomLeft, topRight}` |
+| Cluster background | `pics_cluster(pics, padx, pady, fill, border)` from skillutils |
 | Control output | `size(pic, 5cm); shipout(pic);` |
 
 ---
