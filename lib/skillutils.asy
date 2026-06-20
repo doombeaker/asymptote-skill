@@ -1,14 +1,22 @@
 // skillutils.asy — Reusable picture-based diagram utilities
 //
-// Provides label_box_pic() for creating positioned, styled label boxes
-// as picture components, and pics_bbox() for computing the combined
-// bounding box of multiple pictures using point() anchors (see below
-// for why min()/max() is avoided).
+// Provides label_box_pic() and label_rounded_pic() for creating positioned,
+// styled label boxes as picture components (rectangular and rounded-corner),
+// roundbox() for creating rounded rectangle paths, pics_bbox() for computing
+// the combined bounding box of multiple pictures using point() anchors, and
+// pics_cluster() for background cluster boxes.
 //
 // Follow the picture + point() pattern:
-//   - Create nodes with label_box_pic()
+//   - Create nodes with label_box_pic() or label_rounded_pic()
 //   - Connect with point() anchors
 //   - Add to parent picture with add()
+
+// ==========================================
+// settings for using Chinese with Asymptote
+// ==========================================
+import settings;
+tex="xelatex";
+usepackage("ctex");
 
 // ==========================================
 // LABEL BOX — picture component with built-in positioning
@@ -110,6 +118,79 @@ pair[] pics_bbox(picture[] pics) {
     }
 
     return new pair[]{lo, hi};
+}
+
+// ==========================================
+// ROUNDED BOX — picture component with rounded corners
+// ==========================================
+
+// Create a rounded rectangle path.
+//
+// Parameters:
+//   bl — bottom-left corner of the bounding rectangle
+//   tr — top-right corner of the bounding rectangle
+//   r  — corner radius (clamped to half the smaller dimension)
+//
+// Returns:
+//   A cyclic path tracing the rounded rectangle, drawn clockwise
+//   starting from the left edge above the bottom-left corner.
+path roundbox(pair bl, pair tr, real r) {
+    r = min(r, (tr.x - bl.x) / 2, (tr.y - bl.y) / 2);
+    return (bl.x, bl.y + r){down}..{right}(bl.x + r, bl.y) --
+           (tr.x - r, bl.y){right}..{up}(tr.x, bl.y + r) --
+           (tr.x, tr.y - r){up}..{left}(tr.x - r, tr.y) --
+           (bl.x + r, tr.y){left}..{down}(bl.x, tr.y - r) -- cycle;
+}
+
+// Create a labeled, filled, bordered rounded box as a picture,
+// shifted to `position`.
+//
+// Parameters:
+//   position   — shift vector applied to the returned picture,
+//                so the box center lands at this point in the parent
+//                coordinate system.
+//   box_width  — total width of the box (user units)
+//   box_height — total height of the box (user units)
+//   radius     — corner radius (clamped to half the smaller dimension)
+//   lineDy     — vertical spacing between consecutive text lines
+//   lines      — array of label strings, drawn top-to-bottom
+//   label_text — pen for label rendering (font size, color, weight, etc.)
+//   fillPen    — fill color/pen for the box interior
+//   borderPen  — stroke color/pen for the box outline
+//
+// Returns:
+//   A picture containing the rounded box and labels, already shifted
+//   to `position`. Use directly with add(dest, pic), or query anchors
+//   with point(pic, dir).
+//
+picture label_rounded_pic(pair position, real box_width, real box_height,
+                          real radius, real lineDy, string[] lines,
+                          pen label_text, pen fillPen, pen borderPen) {
+    picture pic;
+
+    // Draw rounded box centered at origin
+    pair bl = (-box_width / 2, -box_height / 2);
+    pair tr = ( box_width / 2,  box_height / 2);
+    path rbox = roundbox(bl, tr, radius);
+    fill(pic, rbox, fillPen);
+    draw(pic, rbox, borderPen);
+
+    // Lay out lines top-to-bottom, vertically centered
+    real y0 = (lines.length - 1) * lineDy / 2;
+    for (int i = 0; i < lines.length; ++i)
+        label(pic, lines[i], (0, y0 - i * lineDy), label_text);
+
+    // Apply position shift and return
+    return shift(position) * pic;
+}
+
+// Single-string convenience overload.
+// Wraps the single text into a one-element string array.
+picture label_rounded_pic(pair position, real box_width, real box_height,
+                          real radius, real lineDy, string text,
+                          pen label_text, pen fillPen, pen borderPen) {
+    return label_rounded_pic(position, box_width, box_height, radius, lineDy,
+                             new string[]{text}, label_text, fillPen, borderPen);
 }
 
 // ==========================================

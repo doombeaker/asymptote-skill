@@ -28,10 +28,9 @@ This skill is organized into documentation files, utility libraries, and ready-t
 | `docs/01-basics.md` | Core language syntax, drawing primitives, paths, pens, transforms, coding standards |
 | `docs/02-geometry.md` | 2D geometric constructions using the `geometry` module |
 | `docs/03-scientific-graphs.md` | Scientific plotting with the `graph` module and `colormap` |
-| `docs/04-flowchart.md` | Flowchart construction using default Asymptote primitives + skillutils |
-| `docs/05-picture-guide.md` | Practical `picture` composition guide: reusable components, transforms, subplots, overlays |
-| `docs/06-skillutils-reference.md` | Skillutils function reference with copy-paste-ready inline code blocks |
-| `lib/skillutils.asy` | Shared utility library: `label_box_pic`, `pics_bbox`, `pics_cluster` — `import skillutils;` |
+| `docs/04-modular-diagram.md` | Modular diagram construction with `picture` + `point()`: components, arrows, clusters, subplots, overlays |
+| `docs/05-skillutils-reference.md` | Skillutils function reference with copy-paste-ready inline code blocks |
+| `lib/skillutils.asy` | Shared utility library: `label_box_pic`, `label_rounded_pic`, `roundbox`, `pics_bbox`, `pics_cluster` — `import skillutils;` |
 | `templates/` | Ready-to-use templates for common drawing types (see list below) |
 
 ### Templates
@@ -265,6 +264,8 @@ For repeated visual elements (circuit symbols, custom arrows, grid nodes), defin
 
 For flowchart/system diagrams specifically, use the shared `skillutils` library which provides:
 - **`label_box_pic(position, width, height, lineDy, lines, labelPen, fillPen, borderPen)`** — creates a positioned, styled label box as a `picture`
+- **`label_rounded_pic(position, width, height, radius, lineDy, lines, labelPen, fillPen, borderPen)`** — same as `label_box_pic` but with rounded corners
+- **`roundbox(bl, tr, r)`** — creates a rounded rectangle path
 - **`pics_bbox(pictures)`** — safely computes combined bounding box using `point()` (avoids `min()`/`max()` coordinate trap)
 - **`pics_cluster(pictures, padx, pady, fillPen, borderPen)`** — draws a background cluster box auto-sized from its contents
 
@@ -272,7 +273,7 @@ For flowchart/system diagrams specifically, use the shared `skillutils` library 
 1. Copy `lib/skillutils.asy` into the same directory as your `.asy` script, or
 2. Run Asymptote with `-dir <path-to-skill>/lib` to add the library directory to the search path
 
-When generating code, you MAY inline the `skillutils` functions directly into the output file if the user prefers a single-file solution. The copy-paste-ready code blocks are in `docs/06-skillutils-reference.md`.
+When generating code, you MAY inline the `skillutils` functions directly into the output file if the user prefers a single-file solution. The copy-paste-ready code blocks are in `docs/05-skillutils-reference.md`.
 
 ```asy
 import skillutils;

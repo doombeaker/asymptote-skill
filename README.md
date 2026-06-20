@@ -22,11 +22,10 @@ Asymptote is a powerful descriptive vector graphics language that provides a mat
 │   ├── 01-basics.md      # Core language syntax, paths, pens, transforms, coding standards
 │   ├── 02-geometry.md    # 2D geometric constructions using the geometry module
 │   ├── 03-scientific-graphs.md  # Scientific plotting with graph and colormap modules
-│   ├── 04-flowchart.md   # Flowchart construction using default primitives + skillutils
-│   ├── 05-picture-guide.md      # Practical `picture` composition: components, transforms, overlays
-│   └── 06-skillutils-reference.md # Skillutils function reference with inline code blocks
+│   ├── 04-modular-diagram.md    # Modular diagram construction with picture + point()
+│   └── 05-skillutils-reference.md # Skillutils function reference with inline code blocks
 ├── lib/                  # Shared Asymptote libraries (part of the skill)
-│   └── skillutils.asy    # Reusable library: label_box_pic, pics_bbox, pics_cluster
+│   └── skillutils.asy    # Reusable library: label_box_pic, label_rounded_pic, roundbox, pics_bbox, pics_cluster
 ├── templates/            # Ready-to-use Asymptote templates
 │   ├── geometric_*.asy   # 2D geometric drawing templates
 │   ├── scientific_*.asy  # Scientific graph templates
