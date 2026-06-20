@@ -3,12 +3,13 @@
 // Provides label_box_pic() and label_rounded_pic() for creating positioned,
 // styled label boxes as picture components (rectangular and rounded-corner),
 // roundbox() for creating rounded rectangle paths, pics_bbox() for computing
-// the combined bounding box of multiple pictures using point() anchors, and
-// pics_cluster() for background cluster boxes.
+// the combined bounding box of multiple pictures using point() anchors,
+// pics_cluster() for background cluster boxes, and connect_pics() for drawing
+// connector lines (with arrows) between two pictures.
 //
 // Follow the picture + point() pattern:
 //   - Create nodes with label_box_pic() or label_rounded_pic()
-//   - Connect with point() anchors
+//   - Connect with connect_pics() (or point() anchors for custom routing)
 //   - Add to parent picture with add()
 
 // ==========================================
@@ -227,4 +228,75 @@ picture pics_cluster(picture[] pics, real padx, real pady,
     picture bg;
     filldraw(bg, box(lo, hi), fillPen, borderPen);
     return bg;
+}
+
+// ==========================================
+// CONNECTOR — line+arrow between two pictures
+// ==========================================
+
+// Draw a connector line (with arrow) from srcPic to destPic, returned as a
+// picture. The endpoints are boundary anchors queried via point(): the line
+// starts at srcPic's srcDir edge and ends at destPic's destDir edge, each
+// pulled back by `gap` along its own direction for visual breathing room.
+//
+// The path uses tangent control {srcDir}..{-destDir}: the curve leaves srcPic
+// heading outward in srcDir, and arrives at destPic heading inward (i.e., in
+// direction -destDir). For aligned axes (e.g. E->W or S->N) this produces a
+// straight line; for non-aligned axes (e.g. S->W) it produces a smooth L-curve.
+// This mirrors the idiomatic pattern already used throughout the codebase:
+//   draw(dest, a{E}..{E}b, ...)   // see system_diagram.asy / modular_flowchart.asy
+//
+// WHY A SINGLE linePen:
+//   Asymptote pen addition combines color + linewidth + linetype (dashed /
+//   dotted / solid). Passing one pen is the idiomatic way -- examples:
+//     rgb(0.2,0.2,0.2) + linewidth(0.9)            // solid dark gray
+//     rgb(0.5,0.5,0.5) + linewidth(0.7) + dashed   // dashed gray
+//     blue + dotted + linewidth(0.8)               // dotted blue
+//   Splitting into color / width / style params would be less idiomatic.
+//
+// WHY gap (manual offset) instead of margin=:
+//   Asymptote's built-in margin parameter (PenMargin, TrueMargin, DotMargin)
+//   shortens the path geometry. The rest of this codebase
+//   (docs/04-modular-diagram.md, system_diagram.asy, modular_flowchart.asy)
+//   consistently uses point(pic,dir) + gap*dir for connector endpoints, so
+//   connect_pics() follows that same local convention for consistency.
+//
+// Parameters:
+//   srcPic    -- source picture (already positioned via shift() or label_*_pic)
+//   srcDir    -- boundary direction on srcPic (E, W, N, S, NE, NW, SE, SW, ...)
+//   destPic   -- destination picture (already positioned)
+//   destDir   -- boundary direction on destPic
+//   gap       -- pullback distance from each anchor, along its own dir.
+//                Use 0.2 for typical flowcharts; 0 to touch the box edge.
+//   linePen   -- pen for the connector: color + linewidth + linetype combined.
+//                Use nullpen for an invisible stroke (rarely useful).
+//   arrowSpec -- arrowbar value controlling arrow style + position + size.
+//                Common choices:
+//                  Arrow(TeXHead)                  -- single end arrow
+//                  Arrow(TeXHead, size=3mm)        -- larger arrowhead
+//                  Arrows(TeXHead)                 -- arrows at BOTH ends
+//                  BeginArrow(TeXHead)             -- arrow at start only
+//                  None                            -- no arrow (just a line)
+//
+// Returns:
+//   A picture containing ONLY the connector (no nodes). Add it BEFORE the
+//   node pictures so it renders behind them (z-order convention):
+//
+//     picture conn = connect_pics(pA, E, pB, W, 0.2,
+//                                 rgb(0.2,0.2,0.2) + linewidth(0.9),
+//                                 Arrow(TeXHead));
+//     add(diagram, conn);   // behind
+//     add(diagram, pA);     // in front
+//     add(diagram, pB);
+//
+picture connect_pics(picture srcPic, pair srcDir,
+                     picture destPic, pair destDir,
+                     real gap,
+                     pen linePen,
+                     arrowbar arrowSpec) {
+    pair a = point(srcPic,  srcDir)  + gap * srcDir;
+    pair b = point(destPic, destDir) + gap * destDir;
+    picture pic;
+    draw(pic, a{srcDir}..{-destDir}b, linePen, arrowSpec);
+    return pic;
 }
