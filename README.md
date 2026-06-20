@@ -120,7 +120,7 @@ This skill enforces the following principles for all generated code:
 
 1. **Professional coding standards**: Meaningful variable names, named constants, strategic comments mapping code to visual elements
 2. **Default capabilities first**: Prefer Asymptote's built-in primitives over standard libraries (e.g., use default drawing for flowcharts instead of `import flowchart`)
-3. **English-only output**: All labels, comments, and variable names are in English (Asymptote has poor CJK support)
+3. **CJK support**: Chinese labels are supported via `xelatex` + `ctex`, enabled automatically by `import skillutils;` (or manually by adding `import settings; tex="xelatex"; usepackage("ctex");`)
 4. **Clean aesthetics**: Minimal text in diagram elements (1-3 words per flowchart block), consistent styling, effective whitespace
 5. **Picture-based composition**: Encapsulate repeated elements in `picture` functions, compose with `add(dest, src)`, and apply transforms (`shift`, `rotate`) before adding
 6. **Shared utilities**: Use `import skillutils;` for common diagram building blocks (`label_box_pic`, `label_rounded_pic`, `roundbox`, `pics_bbox`, `pics_cluster`)

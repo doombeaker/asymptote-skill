@@ -85,7 +85,7 @@ Asymptote supports multiple output formats:
 
 ## Important Conventions
 
-1. **Language**: **ALL output must be in English only.** Asymptote has poor support for CJK (Chinese, Japanese, Korean) characters and Unicode. Use English labels, comments, and variable names exclusively.
+1. **Language and CJK support**: By default, Asymptote uses LaTeX and cannot render CJK (Chinese, Japanese, Korean) characters. The `skillutils` library enables CJK support via `xelatex` + `ctex` — any file that `import skillutils;` can use Chinese labels directly (e.g. `label("流程图", pos)`). For files that do not import `skillutils`, add these lines at the top: `import settings; tex="xelatex"; usepackage("ctex");`. Variable names and comments should remain in English by convention.
 2. **Coordinates**: Default in PostScript bp (1/72 inch). Use `unitsize(1cm)` for metric.
 3. **Paths**: `--` for straight line, `..` for Bezier spline, `cycle` to close.
 4. **Labels**: Double-quoted LaTeX strings: `label("$E=mc^2$", (0,0), N);`
