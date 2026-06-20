@@ -186,7 +186,7 @@ import skillutils;
 //                         real lineDy, string[] lines,
 //                         pen label_text, pen fillPen, pen borderPen)
 //
-// Key improvements over the old inline version:
+// Key features:
 //   - position param: the box is shifted to position internally,
 //     so you call label_box_pic((x, y), bw, bh, ...) directly
 //     instead of shift(x, y) * label_box_pic(bw, bh, ...)

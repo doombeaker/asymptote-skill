@@ -1,8 +1,11 @@
-# Skillutils Reference & Inline Code Source
+# Skillutils API Reference
 
-This document provides the core `skillutils` functions as **copy-paste-ready code blocks**. Other agents and code generators should inline these functions directly into their output `.asy` files when the user does not have `skillutils.asy` in their import path.
+API reference for the `skillutils` library. All functions are accessed via `import skillutils;` — the library must be installed on Asymptote's module search path (e.g., `~/.asy/`).
 
-When `lib/skillutils.asy` IS available on the Asymptote search path, prefer `import skillutils;` instead.
+```bash
+# One-time install
+cp <path-to-skill>/lib/skillutils.asy ~/.asy/
+```
 
 ---
 
@@ -10,28 +13,19 @@ When `lib/skillutils.asy` IS available on the Asymptote search path, prefer `imp
 
 Creates a labeled, filled, bordered box as a `picture`, shifted to `position`. This is the fundamental building block for modular diagram nodes.
 
+### Signatures
+
 ```asy
 picture label_box_pic(pair position, real box_width, real box_height,
                       real lineDy, string[] lines,
-                      pen label_text, pen fillPen, pen borderPen) {
-    picture pic;
-    pair bl = (-box_width / 2, -box_height / 2);
-    pair tr = ( box_width / 2,  box_height / 2);
-    fill(pic, box(bl, tr), fillPen);
-    draw(pic, box(bl, tr), borderPen);
-    real y0 = (lines.length - 1) * lineDy / 2;
-    for (int i = 0; i < lines.length; ++i)
-        label(pic, lines[i], (0, y0 - i * lineDy), label_text);
-    return shift(position) * pic;
-}
+                      pen label_text, pen fillPen, pen borderPen)
 
 picture label_box_pic(pair position, real box_width, real box_height,
                       real lineDy, string text,
-                      pen label_text, pen fillPen, pen borderPen) {
-    return label_box_pic(position, box_width, box_height, lineDy,
-                         new string[]{text}, label_text, fillPen, borderPen);
-}
+                      pen label_text, pen fillPen, pen borderPen)
 ```
+
+The single-string overload wraps `text` into a one-element `string[]` and delegates to the array version.
 
 ### Parameters
 
@@ -49,6 +43,8 @@ picture label_box_pic(pair position, real box_width, real box_height,
 ### Usage
 
 ```asy
+import skillutils;
+
 pen textPen = fontsize(9pt);
 
 // Single-line node
@@ -68,14 +64,10 @@ pair anchor = point(pStart, S);  // query boundary — no bh/2 math needed
 
 Creates a rounded rectangle path. Used internally by `label_rounded_pic()`, but also available directly for custom shapes.
 
+### Signature
+
 ```asy
-path roundbox(pair bl, pair tr, real r) {
-    r = min(r, (tr.x - bl.x) / 2, (tr.y - bl.y) / 2);
-    return (bl.x, bl.y + r){down}..{right}(bl.x + r, bl.y) --
-           (tr.x - r, bl.y){right}..{up}(tr.x, bl.y + r) --
-           (tr.x, tr.y - r){up}..{left}(tr.x - r, tr.y) --
-           (bl.x + r, tr.y){left}..{down}(bl.x, tr.y - r) -- cycle;
-}
+path roundbox(pair bl, pair tr, real r)
 ```
 
 ### Parameters
@@ -89,6 +81,8 @@ path roundbox(pair bl, pair tr, real r) {
 ### Usage
 
 ```asy
+import skillutils;
+
 path rbox = roundbox((0, 0), (4, 2), 0.3);
 filldraw(rbox, lightblue, blue);
 ```
@@ -99,28 +93,16 @@ filldraw(rbox, lightblue, blue);
 
 Creates a labeled, filled, bordered rounded box as a `picture`, shifted to `position`. Same interface as `label_box_pic()` with an additional `radius` parameter.
 
+### Signatures
+
 ```asy
 picture label_rounded_pic(pair position, real box_width, real box_height,
                           real radius, real lineDy, string[] lines,
-                          pen label_text, pen fillPen, pen borderPen) {
-    picture pic;
-    pair bl = (-box_width / 2, -box_height / 2);
-    pair tr = ( box_width / 2,  box_height / 2);
-    path rbox = roundbox(bl, tr, radius);
-    fill(pic, rbox, fillPen);
-    draw(pic, rbox, borderPen);
-    real y0 = (lines.length - 1) * lineDy / 2;
-    for (int i = 0; i < lines.length; ++i)
-        label(pic, lines[i], (0, y0 - i * lineDy), label_text);
-    return shift(position) * pic;
-}
+                          pen label_text, pen fillPen, pen borderPen)
 
 picture label_rounded_pic(pair position, real box_width, real box_height,
                           real radius, real lineDy, string text,
-                          pen label_text, pen fillPen, pen borderPen) {
-    return label_rounded_pic(position, box_width, box_height, radius, lineDy,
-                             new string[]{text}, label_text, fillPen, borderPen);
-}
+                          pen label_text, pen fillPen, pen borderPen)
 ```
 
 ### Parameters
@@ -140,6 +122,8 @@ picture label_rounded_pic(pair position, real box_width, real box_height,
 ### Usage
 
 ```asy
+import skillutils;
+
 pen textPen = fontsize(9pt);
 
 // Single-line rounded card
@@ -160,29 +144,33 @@ pair anchor = point(card1, S);  // boundary query works the same as label_box_pi
 
 Computes the axis-aligned bounding box enclosing all given pictures. Uses `point(pic, SW)` / `point(pic, NE)` instead of `min()` / `max()` to avoid the PostScript coordinate trap on standalone sub-pictures.
 
+### Signature
+
 ```asy
-pair[] pics_bbox(picture[] pics) {
-    pair lo = point(pics[0], SW);
-    pair hi = point(pics[0], NE);
-    for (int i = 1; i < pics.length; ++i) {
-        pair lo_i = point(pics[i], SW);
-        pair hi_i = point(pics[i], NE);
-        lo = (min(lo.x, lo_i.x), min(lo.y, lo_i.y));
-        hi = (max(hi.x, hi_i.x), max(hi.y, hi_i.y));
-    }
-    return new pair[]{lo, hi};
-}
+pair[] pics_bbox(picture[] pics)
 ```
+
+### Parameters
+
+| Parameter | Type | Description |
+|---|---|---|
+| `pics` | `picture[]` | Array of pictures whose combined extent is needed |
+
+### Returns
+
+A 2-element `pair[]` array: `{bottomLeft, topRight}`.
 
 ### Why not `min()` / `max()`?
 
 `min(pic)` / `max(pic)` return coordinates through the picture's `user → PS` transform. For a standalone sub-picture that has never been `add()`-ed to a sized parent picture, this transform is the identity in PostScript bp units (1/72 inch), **not** user units. The resulting coordinates appear wildly offset.
 
-`point(pic, dir)` does not have this problem — it computes boundary anchors from the picture's drawn content + stored transforms, returning correct user-coordinate values even for standalone pictures.
+`point(pic, dir)` does not have this problem — it computes boundary anchors from the picture's drawn content and stored transforms, returning correct user-coordinate values even for standalone pictures.
 
 ### Usage
 
 ```asy
+import skillutils;
+
 pair[] bb = pics_bbox(new picture[]{pA, pB, pC});
 pair bottomLeft = bb[0];   // (min x, min y)
 pair topRight  = bb[1];    // (max x, max y)
@@ -194,16 +182,11 @@ pair topRight  = bb[1];    // (max x, max y)
 
 Draws a fill+border rectangle enclosing all given pictures with padding, returned as a `picture`. Add it **before** the node pictures so it renders behind them.
 
+### Signature
+
 ```asy
 picture pics_cluster(picture[] pics, real padx, real pady,
-                     pen fillPen, pen borderPen) {
-    pair[] bb = pics_bbox(pics);
-    pair lo = bb[0] - (padx, pady);
-    pair hi = bb[1] + (padx, pady);
-    picture bg;
-    filldraw(bg, box(lo, hi), fillPen, borderPen);
-    return bg;
-}
+                     pen fillPen, pen borderPen)
 ```
 
 ### Parameters
@@ -219,6 +202,8 @@ picture pics_cluster(picture[] pics, real padx, real pady,
 ### Usage
 
 ```asy
+import skillutils;
+
 picture bg = pics_cluster(new picture[]{pRouter, pPod1, pPod2}, 0.4, 0.3, clusterFill, clusterPen);
 
 add(diagram, bg);     // behind
@@ -228,81 +213,4 @@ add(diagram, pPod2);
 
 // Optional: cluster label positioned below the box
 label(diagram, "Cluster Name", (point(bg, S).x, point(bg, S).y + 0.5), clusterLabelPen);
-```
-
----
-
-## Full Inline Template
-
-When generating a standalone `.asy` file that uses these utilities, inline all functions at the top of the file:
-
-```asy
-// --- skillutils inline ---
-picture label_box_pic(pair position, real box_width, real box_height,
-                      real lineDy, string[] lines,
-                      pen label_text, pen fillPen, pen borderPen) {
-    picture pic;
-    pair bl = (-box_width / 2, -box_height / 2);
-    pair tr = ( box_width / 2,  box_height / 2);
-    fill(pic, box(bl, tr), fillPen);
-    draw(pic, box(bl, tr), borderPen);
-    real y0 = (lines.length - 1) * lineDy / 2;
-    for (int i = 0; i < lines.length; ++i)
-        label(pic, lines[i], (0, y0 - i * lineDy), label_text);
-    return shift(position) * pic;
-}
-picture label_box_pic(pair position, real box_width, real box_height,
-                      real lineDy, string text,
-                      pen label_text, pen fillPen, pen borderPen) {
-    return label_box_pic(position, box_width, box_height, lineDy,
-                         new string[]{text}, label_text, fillPen, borderPen);
-}
-path roundbox(pair bl, pair tr, real r) {
-    r = min(r, (tr.x - bl.x) / 2, (tr.y - bl.y) / 2);
-    return (bl.x, bl.y + r){down}..{right}(bl.x + r, bl.y) --
-           (tr.x - r, bl.y){right}..{up}(tr.x, bl.y + r) --
-           (tr.x, tr.y - r){up}..{left}(tr.x - r, tr.y) --
-           (bl.x + r, tr.y){left}..{down}(bl.x, tr.y - r) -- cycle;
-}
-picture label_rounded_pic(pair position, real box_width, real box_height,
-                          real radius, real lineDy, string[] lines,
-                          pen label_text, pen fillPen, pen borderPen) {
-    picture pic;
-    pair bl = (-box_width / 2, -box_height / 2);
-    pair tr = ( box_width / 2,  box_height / 2);
-    path rbox = roundbox(bl, tr, radius);
-    fill(pic, rbox, fillPen);
-    draw(pic, rbox, borderPen);
-    real y0 = (lines.length - 1) * lineDy / 2;
-    for (int i = 0; i < lines.length; ++i)
-        label(pic, lines[i], (0, y0 - i * lineDy), label_text);
-    return shift(position) * pic;
-}
-picture label_rounded_pic(pair position, real box_width, real box_height,
-                          real radius, real lineDy, string text,
-                          pen label_text, pen fillPen, pen borderPen) {
-    return label_rounded_pic(position, box_width, box_height, radius, lineDy,
-                             new string[]{text}, label_text, fillPen, borderPen);
-}
-pair[] pics_bbox(picture[] pics) {
-    pair lo = point(pics[0], SW);
-    pair hi = point(pics[0], NE);
-    for (int i = 1; i < pics.length; ++i) {
-        pair lo_i = point(pics[i], SW);
-        pair hi_i = point(pics[i], NE);
-        lo = (min(lo.x, lo_i.x), min(lo.y, lo_i.y));
-        hi = (max(hi.x, hi_i.x), max(hi.y, hi_i.y));
-    }
-    return new pair[]{lo, hi};
-}
-picture pics_cluster(picture[] pics, real padx, real pady,
-                     pen fillPen, pen borderPen) {
-    pair[] bb = pics_bbox(pics);
-    pair lo = bb[0] - (padx, pady);
-    pair hi = bb[1] + (padx, pady);
-    picture bg;
-    filldraw(bg, box(lo, hi), fillPen, borderPen);
-    return bg;
-}
-// --- end skillutils inline ---
 ```

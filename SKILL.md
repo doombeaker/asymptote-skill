@@ -29,7 +29,7 @@ This skill is organized into documentation files, utility libraries, and ready-t
 | `docs/02-geometry.md` | 2D geometric constructions using the `geometry` module |
 | `docs/03-scientific-graphs.md` | Scientific plotting with the `graph` module and `colormap` |
 | `docs/04-modular-diagram.md` | Modular diagram construction with `picture` + `point()`: components, arrows, clusters, subplots, overlays |
-| `docs/05-skillutils-reference.md` | Skillutils function reference with copy-paste-ready inline code blocks |
+| `docs/05-skillutils-reference.md` | Skillutils API reference: signatures, parameters, and usage examples |
 | `lib/skillutils.asy` | Shared utility library: `label_box_pic`, `label_rounded_pic`, `roundbox`, `pics_bbox`, `pics_cluster` — `import skillutils;` |
 | `templates/` | Ready-to-use templates for common drawing types (see list below) |
 
@@ -269,11 +269,11 @@ For flowchart/system diagrams specifically, use the shared `skillutils` library 
 - **`pics_bbox(pictures)`** — safely computes combined bounding box using `point()` (avoids `min()`/`max()` coordinate trap)
 - **`pics_cluster(pictures, padx, pady, fillPen, borderPen)`** — draws a background cluster box auto-sized from its contents
 
-**How to use `skillutils.asy`:** The library lives at `lib/skillutils.asy` within the skill. For `import skillutils;` to work, the file must be in Asymptote's search path. Either:
-1. Copy `lib/skillutils.asy` into the same directory as your `.asy` script, or
-2. Run Asymptote with `-dir <path-to-skill>/lib` to add the library directory to the search path
+**How to use `skillutils.asy`:** All generated code uses `import skillutils;` to access these functions. For this to work, `skillutils.asy` must be on Asymptote's module search path. Install it once by copying to `~/.asy` (one of Asymptote's default search paths):
 
-When generating code, you MAY inline the `skillutils` functions directly into the output file if the user prefers a single-file solution. The copy-paste-ready code blocks are in `docs/05-skillutils-reference.md`.
+```bash
+cp <path-to-skill>/lib/skillutils.asy ~/.asy/
+```
 
 ```asy
 import skillutils;
