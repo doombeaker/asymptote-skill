@@ -22,8 +22,10 @@ Asymptote is a powerful descriptive vector graphics language that provides a mat
 │   ├── 01-basics.md      # Core language syntax, paths, pens, transforms, coding standards
 │   ├── 02-geometry.md    # 2D geometric constructions using the geometry module
 │   ├── 03-scientific-graphs.md  # Scientific plotting with graph and colormap modules
-│   ├── 04-flowchart.md   # Flowchart construction using default primitives
-│   └── 05-picture-guide.md      # Practical `picture` composition: components, transforms, overlays
+│   ├── 04-modular-diagram.md    # Modular diagram construction with picture + point()
+│   └── 05-skillutils-reference.md # Skillutils API reference
+├── lib/                  # Shared Asymptote libraries (part of the skill)
+│   └── skillutils.asy    # Reusable library: label_box_pic, label_rounded_pic, roundbox, pics_bbox, pics_cluster
 ├── templates/            # Ready-to-use Asymptote templates
 │   ├── geometric_*.asy   # 2D geometric drawing templates
 │   ├── scientific_*.asy  # Scientific graph templates
@@ -55,7 +57,7 @@ sudo pacman -S asymptote
 
 ### For Users
 
-Clone this repository into your OpenCode skills directory:
+1. Clone this repository into your OpenCode skills directory:
 
 ```bash
 # Global installation (available in all projects)
@@ -67,7 +69,17 @@ git clone https://github.com/doombeaker/asymptote-skill.git \
   .opencode/skills/asymptote
 ```
 
-Then the agent can load it on demand by calling:
+2. Install the shared `skillutils` library so `import skillutils;` works in Asymptote:
+
+```bash
+# ~/.asy is one of Asymptote's default module search paths
+cp ~/.config/opencode/skills/asymptote/lib/skillutils.asy ~/.asy/
+# Adjust the source path if you cloned to a different location
+```
+
+This step is **required** — all generated code uses `import skillutils;` to access `label_box_pic`, `label_rounded_pic`, `roundbox`, `pics_bbox`, and `pics_cluster`.
+
+Then the agent can load the skill on demand by calling:
 
 ```
 skill({ name: "asymptote" })
@@ -108,9 +120,10 @@ This skill enforces the following principles for all generated code:
 
 1. **Professional coding standards**: Meaningful variable names, named constants, strategic comments mapping code to visual elements
 2. **Default capabilities first**: Prefer Asymptote's built-in primitives over standard libraries (e.g., use default drawing for flowcharts instead of `import flowchart`)
-3. **English-only output**: All labels, comments, and variable names are in English (Asymptote has poor CJK support)
+3. **CJK support**: Chinese labels are supported via `xelatex` + `ctex`, enabled automatically by `import skillutils;` (or manually by adding `import settings; tex="xelatex"; usepackage("ctex");`)
 4. **Clean aesthetics**: Minimal text in diagram elements (1-3 words per flowchart block), consistent styling, effective whitespace
 5. **Picture-based composition**: Encapsulate repeated elements in `picture` functions, compose with `add(dest, src)`, and apply transforms (`shift`, `rotate`) before adding
+6. **Shared utilities**: Use `import skillutils;` for common diagram building blocks (`label_box_pic`, `label_rounded_pic`, `roundbox`, `pics_bbox`, `pics_cluster`)
 
 ## Output Formats
 

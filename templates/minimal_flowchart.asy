@@ -4,6 +4,8 @@
 // Use this as the starting point for simple sequential workflows
 // ==========================================
 
+import skillutils;
+
 // ------------------------------------------
 // CONFIGURATION
 // ------------------------------------------
@@ -16,30 +18,13 @@ real nodeDy = 2.0;    // Vertical step between rows
 real xCenter = 0;     // Center column x-coordinate
 real yTop    = 0;      // Top of diagram
 
+pen textPen = fontsize(9pt);
+
 // Colors — one pen pair per role
 pen startFill   = rgb(0.90, 0.95, 1.00);  pen startBorder   = rgb(0.25, 0.40, 0.60) + linewidth(1.2);
 pen processFill = rgb(1.00, 0.97, 0.90);  pen processBorder = rgb(0.50, 0.40, 0.20) + linewidth(1.2);
 pen doneFill    = rgb(0.90, 1.00, 0.95);  pen doneBorder    = rgb(0.20, 0.50, 0.40) + linewidth(1.2);
 pen arrowPen    = rgb(0.25, 0.25, 0.25) + linewidth(0.9);
-
-// ------------------------------------------
-// NODE COMPONENT — returns picture centered at origin
-// ------------------------------------------
-picture label_box_pic(real bw, real bh, real lineDy,
-                      string[] lines, pen fillPen, pen borderPen) {
-    picture pic;
-    fill(pic, box((-bw/2, -bh/2), (bw/2, bh/2)), fillPen);
-    draw(pic, box((-bw/2, -bh/2), (bw/2, bh/2)), borderPen);
-    real y0 = (lines.length - 1) * lineDy / 2;
-    for (int i = 0; i < lines.length; ++i)
-        label(pic, lines[i], (0, y0 - i * lineDy), fontsize(9pt));
-    return pic;
-}
-
-picture label_box_pic(real bw, real bh, real lineDy,
-                      string text, pen fillPen, pen borderPen) {
-    return label_box_pic(bw, bh, lineDy, new string[]{text}, fillPen, borderPen);
-}
 
 // ------------------------------------------
 // ARROW HELPER — vertical arrow using point() anchors
@@ -54,21 +39,16 @@ void arrowDown(picture dest, picture top, picture bot) {
 // BUILD DIAGRAM
 // ------------------------------------------
 
-// --- Create and position nodes (shift baked into each picture) ---
-picture pStart = shift(xCenter, yTop)
-    * label_box_pic(bw, bh, lineDy, "Start", startFill, startBorder);
+// --- Create and position nodes ---
+picture pStart = label_box_pic((xCenter, yTop), bw, bh, lineDy, "Start", textPen, startFill, startBorder);
 
-picture pStep1 = shift(xCenter, yTop - nodeDy)
-    * label_box_pic(bw, bh, lineDy, new string[]{"Step 1", "Describe"}, processFill, processBorder);
+picture pStep1 = label_box_pic((xCenter, yTop - nodeDy), bw, bh, lineDy, new string[]{"Step 1", "Describe"}, textPen, processFill, processBorder);
 
-picture pStep2 = shift(xCenter, yTop - 2*nodeDy)
-    * label_box_pic(bw, bh, lineDy, new string[]{"Step 2", "Describe"}, processFill, processBorder);
+picture pStep2 = label_box_pic((xCenter, yTop - 2*nodeDy), bw, bh, lineDy, new string[]{"Step 2", "Describe"}, textPen, processFill, processBorder);
 
-picture pStep3 = shift(xCenter, yTop - 3*nodeDy)
-    * label_box_pic(bw, bh, lineDy, new string[]{"Step 3", "Describe"}, processFill, processBorder);
+picture pStep3 = label_box_pic((xCenter, yTop - 3*nodeDy), bw, bh, lineDy, new string[]{"Step 3", "Describe"}, textPen, processFill, processBorder);
 
-picture pDone = shift(xCenter, yTop - 4*nodeDy)
-    * label_box_pic(bw, bh, lineDy, "Done", doneFill, doneBorder);
+picture pDone = label_box_pic((xCenter, yTop - 4*nodeDy), bw, bh, lineDy, "Done", textPen, doneFill, doneBorder);
 
 // --- Assemble ---
 picture diagram;

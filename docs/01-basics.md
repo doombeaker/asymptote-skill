@@ -352,6 +352,12 @@ pen hsvPen = hsv(180, 0.5, 0.75);
 // Named colors (in plain module)
 black, white, red, green, blue, cyan, magenta, yellow
 
+// WARNING: `gray` is NOT a predefined color constant.
+// Use gray(r) function or rgb() instead:
+pen midGray = gray(0.5);              // Correct — function call
+pen midGray2 = rgb(0.5, 0.5, 0.5);   // Correct — explicit RGB
+// pen midGray3 = gray;               // WRONG — may cause compilation errors
+
 // Additional palettes
 import x11colors;  // 140 X11 colors
 import texcolors;  // 68 TeX CMYK colors
@@ -387,7 +393,30 @@ zerowinding;   // Nonzero winding number (default)
 evenodd;       // Even-odd rule
 ```
 
-### 5.5 Transparency (PDF output only)
+### 5.5 Font Styling in Labels
+
+Asymptote does **not** have a `bold` pen attribute. To produce bold text in labels, use LaTeX markup:
+
+```asy
+// Bold text — use LaTeX \textbf, NOT a pen attribute
+label("\textbf{Bold Title}", (0, 5), fontsize(14pt));
+
+// WRONG — `bold` does not exist as a pen attribute
+// label("Title", (0, 5), fontsize(14pt) + bold);  // COMPILE ERROR
+
+// Italic text — use LaTeX \textit
+label("\textit{Note}", (0, 3), fontsize(9pt));
+```
+
+Font size is controlled by `fontsize()`, which takes a `real` (typically with `pt` unit):
+
+```asy
+pen titleText = fontsize(14pt);
+pen bodyText  = fontsize(9pt);
+pen smallText = fontsize(7pt);
+```
+
+### 5.6 Transparency (PDF output only)
 
 ```asy
 pen semiTransparent = opacity(0.5);
