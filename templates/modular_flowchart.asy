@@ -13,12 +13,12 @@ import skillutils;
 // ==========================================
 // LAYOUT PARAMETERS — adjust these to tune the diagram
 // ==========================================
-real boxW       = 2.6;      // Box width (user units ≈ cm at output)
-real bh         = 0.95;     // Box height
+real boxWidth   = 2.6;      // Box width (user units ≈ cm at output)
+real boxHeight   = 0.95;     // Box height
 real lineDy     = 0.33;     // Line spacing inside box
 real gap        = 0.18;     // Arrow pullback from box edge
 real dx         = 3.0;      // Horizontal step between adjacent nodes
-                            //   inter-box gap = dx - boxW = 0.4
+                            //   inter-box gap = dx - boxWidth = 0.4
 
 real rowDy      = 2.2;      // Vertical distance: main row ↔ upper/lower rows
 real xStart     = -22.5;    // X coordinate of leftmost node (≈ -7.5*dx for centering)
@@ -43,13 +43,13 @@ real yMain  = 0;
 real yUpper = yMain + rowDy;
 real yLower = yMain - rowDy;
 
-real yDivider   = yUpper + bh/2 + dividerPad;
-real yAnnotTop  = yMain + bh/2 + annotPad;
+real yDivider   = yUpper + boxHeight/2 + dividerPad;
+real yAnnotTop  = yMain + boxHeight/2 + annotPad;
 real yAnnotSub  = yAnnotTop - annotLine;
-real yBotAnnot1 = yLower - bh/2 - botAnnot;
+real yBotAnnot1 = yLower - boxHeight/2 - botAnnot;
 real yBotAnnot2 = yBotAnnot1 - annotLine;
-real yBar       = yLower - bh/2 - barPad;
-real yQuote     = yLower - bh/2 - quotePad;
+real yBar       = yLower - boxHeight/2 - barPad;
+real yQuote     = yLower - boxHeight/2 - quotePad;
 real yTitle     = yDivider + titlePad;
 
 // ==========================================
@@ -71,12 +71,12 @@ pen textPen      = fontsize(9pt);
 // NODE COMPONENT — uses skillutils for label_box_pic
 // ==========================================
 
-// Convenience wrapper using global boxW/bh/lineDy and textPen
-picture box2(pair position, string[] lines, pen fillPen, pen borderPen) {
-    return label_box_pic(position, boxW, bh, lineDy, lines, textPen, fillPen, borderPen);
+// Convenience wrapper using global boxWidth/boxHeight/lineDy and textPen
+picture box2(pair boxPosition, string[] lines, pen fillPen, pen borderPen) {
+    return label_box_pic(boxPosition, boxWidth, boxHeight, lineDy, lines, textPen, fillPen, borderPen);
 }
-picture box2(pair position, string text, pen fillPen, pen borderPen) {
-    return box2(position, new string[]{text}, fillPen, borderPen);
+picture box2(pair boxPosition, string text, pen fillPen, pen borderPen) {
+    return box2(boxPosition, new string[]{text}, fillPen, borderPen);
 }
 
 // ==========================================

@@ -9,8 +9,8 @@ import skillutils;
 // ------------------------------------------
 // CONFIGURATION
 // ------------------------------------------
-real bw     = 3.0;    // Box width
-real bh     = 0.9;    // Box height
+real boxWidth = 3.0;    // Box width
+real boxHeight = 0.9;   // Box height
 real gap    = 0.25;   // Pullback from each box edge to arrow endpoint
 real lineDy = 0.32;   // Line spacing inside multi-line box
 real nodeDy = 2.0;    // Vertical step between rows
@@ -32,11 +32,11 @@ pen arrowPen    = rgb(0.25, 0.25, 0.25) + linewidth(0.9);
 // ------------------------------------------
 
 // --- Create and position nodes ---
-picture pStart = label_box_pic((xCenter, yTop),             bw, bh, lineDy, "Start", textPen, startFill,   startBorder);
-picture pStep1 = label_box_pic((xCenter, yTop - nodeDy),    bw, bh, lineDy, new string[]{"Step 1", "Describe"}, textPen, processFill, processBorder);
-picture pStep2 = label_box_pic((xCenter, yTop - 2*nodeDy),  bw, bh, lineDy, new string[]{"Step 2", "Describe"}, textPen, processFill, processBorder);
-picture pStep3 = label_box_pic((xCenter, yTop - 3*nodeDy),  bw, bh, lineDy, new string[]{"Step 3", "Describe"}, textPen, processFill, processBorder);
-picture pDone  = label_box_pic((xCenter, yTop - 4*nodeDy),  bw, bh, lineDy, "Done",  textPen, doneFill,    doneBorder);
+picture pStart = label_box_pic((xCenter, yTop),             boxWidth, boxHeight, lineDy, "Start", textPen, startFill,   startBorder);
+picture pStep1 = label_box_pic((xCenter, yTop - nodeDy),    boxWidth, boxHeight, lineDy, new string[]{"Step 1", "Describe"}, textPen, processFill, processBorder);
+picture pStep2 = label_box_pic((xCenter, yTop - 2*nodeDy),  boxWidth, boxHeight, lineDy, new string[]{"Step 2", "Describe"}, textPen, processFill, processBorder);
+picture pStep3 = label_box_pic((xCenter, yTop - 3*nodeDy),  boxWidth, boxHeight, lineDy, new string[]{"Step 3", "Describe"}, textPen, processFill, processBorder);
+picture pDone  = label_box_pic((xCenter, yTop - 4*nodeDy),  boxWidth, boxHeight, lineDy, "Done",  textPen, doneFill,    doneBorder);
 
 // --- Assemble ---
 picture diagram;

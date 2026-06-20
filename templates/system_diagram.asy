@@ -11,8 +11,8 @@
 // ------------------------------------------
 import skillutils;
 
-real bw         = 3.8;
-real bh         = 1.2;
+real boxWidth   = 3.8;
+real boxHeight   = 1.2;
 real lineDy     = 0.36;
 real gap        = 0.2;
 real dx         = 4.5;
@@ -36,13 +36,13 @@ pen dispatchPen  = gray(0.5) + linewidth(0.7) + dashed;
 real xStart = -11;
 
 // --- Create and position nodes ---
-picture pUser      = label_box_pic((xStart,            yTop),         bw, bh, lineDy, new string[]{"User",     "Client"},        textPen, userColor,    userBorder);
-picture pGateway   = label_box_pic((xStart + dx,       yTop),         bw, bh, lineDy, new string[]{"Gateway",  "Auth, Routing"}, textPen, gatewayColor, gatewayBorder);
-picture pRouter    = label_box_pic((xStart + 3.25*dx,  yTop - 1.5),   bw, bh, lineDy, new string[]{"Router",   "Load Balancer"}, textPen, routerColor,  routerBorder);
-picture pWorker1   = label_box_pic((xStart + 2*dx,     yBot),         bw, bh, lineDy, new string[]{"Worker 1", "GPU Tasks"},     textPen, workerColor,  workerBorder);
-picture pWorkerDot = label_box_pic((xStart + 3.25*dx,  yBot),         bw, bh, lineDy, new string[]{"Worker ...", "GPU Tasks"},   textPen, workerColor,  workerBorder);
-picture pWorker2   = label_box_pic((xStart + 4.5*dx,   yBot),         bw, bh, lineDy, new string[]{"Worker N", "GPU Tasks"},     textPen, workerColor,  workerBorder);
-picture pResult    = label_box_pic((xStart + 6.0*dx,   (yTop+yBot)/2), bw, bh, lineDy, new string[]{"Result",   "Output"},        textPen, resultColor,  resultBorder);
+picture pUser      = label_box_pic((xStart,            yTop),         boxWidth, boxHeight, lineDy, new string[]{"User",     "Client"},        textPen, userColor,    userBorder);
+picture pGateway   = label_box_pic((xStart + dx,       yTop),         boxWidth, boxHeight, lineDy, new string[]{"Gateway",  "Auth, Routing"}, textPen, gatewayColor, gatewayBorder);
+picture pRouter    = label_box_pic((xStart + 3.25*dx,  yTop - 1.5),   boxWidth, boxHeight, lineDy, new string[]{"Router",   "Load Balancer"}, textPen, routerColor,  routerBorder);
+picture pWorker1   = label_box_pic((xStart + 2*dx,     yBot),         boxWidth, boxHeight, lineDy, new string[]{"Worker 1", "GPU Tasks"},     textPen, workerColor,  workerBorder);
+picture pWorkerDot = label_box_pic((xStart + 3.25*dx,  yBot),         boxWidth, boxHeight, lineDy, new string[]{"Worker ...", "GPU Tasks"},   textPen, workerColor,  workerBorder);
+picture pWorker2   = label_box_pic((xStart + 4.5*dx,   yBot),         boxWidth, boxHeight, lineDy, new string[]{"Worker N", "GPU Tasks"},     textPen, workerColor,  workerBorder);
+picture pResult    = label_box_pic((xStart + 6.0*dx,   (yTop+yBot)/2), boxWidth, boxHeight, lineDy, new string[]{"Result",   "Output"},        textPen, resultColor,  resultBorder);
 
 // ------------------------------------------
 // ASSEMBLE DIAGRAM
