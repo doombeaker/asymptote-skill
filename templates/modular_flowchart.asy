@@ -1,6 +1,9 @@
+import skillutils;
+
 // Zheng He's Voyages - HORIZONTAL Timeline (Landscape)
 // 1405-1433, Seven Voyages Across the Western Ocean
-// Uses picture + point() pattern for modular composition
+// Uses picture + point() pattern for modular composition.
+// Node-to-node connectors use connect_pics() from skillutils.
 //
 // SCALING PRINCIPLE:
 //   Labels use fixed font sizes (7pt). For text to fit inside boxes,
@@ -10,12 +13,12 @@
 // ==========================================
 // LAYOUT PARAMETERS — adjust these to tune the diagram
 // ==========================================
-real bw         = 2.6;      // Box width (user units ≈ cm at output)
+real boxW       = 2.6;      // Box width (user units ≈ cm at output)
 real bh         = 0.95;     // Box height
 real lineDy     = 0.33;     // Line spacing inside box
-real gap        = 0.18;     // Arrow gap from box edge
+real gap        = 0.18;     // Arrow pullback from box edge
 real dx         = 3.0;      // Horizontal step between adjacent nodes
-                            //   inter-box gap = dx - bw = 0.4
+                            //   inter-box gap = dx - boxW = 0.4
 
 real rowDy      = 2.2;      // Vertical distance: main row ↔ upper/lower rows
 real xStart     = -22.5;    // X coordinate of leftmost node (≈ -7.5*dx for centering)
@@ -59,6 +62,7 @@ pen tributeColor = rgb(0.85, 1.00, 0.90);  pen tributeBorder = black + 1.0pt;
 pen hongxiColor  = rgb(0.95, 0.90, 0.95);  pen hongxiBorder  = black + 1.0pt;
 pen xuandeColor  = rgb(1.00, 0.90, 0.80);  pen xuandeBorder  = black + 1.0pt;
 pen endColor     = gray(0.90);              pen endBorder     = black + 1.0pt;
+// Connector pens: each is color + linewidth + linetype fused, Asymptote idiom.
 pen arrowPen     = rgb(0.3, 0.2, 0.1) + linewidth(0.8);
 pen lightArrow   = rgb(0.3, 0.2, 0.1) + linewidth(0.6);
 pen textPen      = fontsize(9pt);
@@ -66,31 +70,13 @@ pen textPen      = fontsize(9pt);
 // ==========================================
 // NODE COMPONENT — uses skillutils for label_box_pic
 // ==========================================
-import skillutils;
 
-// Convenience wrapper using global bw/bh/lineDy and textPen
+// Convenience wrapper using global boxW/bh/lineDy and textPen
 picture box2(pair position, string[] lines, pen fillPen, pen borderPen) {
-    return label_box_pic(position, bw, bh, lineDy, lines, textPen, fillPen, borderPen);
+    return label_box_pic(position, boxW, bh, lineDy, lines, textPen, fillPen, borderPen);
 }
 picture box2(pair position, string text, pen fillPen, pen borderPen) {
     return box2(position, new string[]{text}, fillPen, borderPen);
-}
-
-// ==========================================
-// ARROW HELPERS
-// ==========================================
-void chainH(picture dest, picture[] nodes, real gap, pen p) {
-    for (int i = 0; i < nodes.length - 1; ++i)
-        draw(dest, point(nodes[i], E) + (gap, 0)
-                    -- point(nodes[i+1], W) + (-gap, 0),
-             arrow = Arrow(TeXHead), p);
-}
-
-void arrowV(picture dest, picture src, pair srcDir,
-            picture tgt, pair tgtDir, real gap, pen p) {
-    draw(dest, point(src, srcDir) + gap * srcDir
-                -- point(tgt,   tgtDir)   + gap * tgtDir,
-         arrow = Arrow(TeXHead), p);
 }
 
 // ==========================================
@@ -142,26 +128,36 @@ draw(diagram, (xStart - 2, yDivider) -- (xStart + 17*dx, yDivider),
      gray(0.5) + linewidth(0.8) + dashed);
 label(diagram, "Xuande Reign (1433)", (xStart + 13*dx, yDivider + dividerLbl), fontsize(10pt));
 
-// --- Arrows (drawn before nodes → behind nodes) ---
+// --- Connectors (added before nodes → render behind nodes) ---
+// Each connect_pics(src, srcDir, tgt, tgtDir, gap, pen, arrowbar) returns
+// a picture containing just the connector; add() it BEFORE the node pictures
+// so arrows render behind the boxes (z-order convention, docs/04 §1 rule 5).
 
-// Main flow (all horizontal links in one call)
-chainH(diagram, new picture[] {pOrigin, pService, pV1, pV1ret, pV2, pV2ret,
-                               pV3, pV3ret, pV4, pV5, pV6, pTransition, pV7, pLegacy},
-       gap, arrowPen);
+// Main horizontal flow (Yongle → Xuande → Legacy). All consecutive pairs
+// share y = yMain, so {E}..{-W=E} tangents collapse to straight horizontal
+// lines — visually identical to the original `a -- b` chords.
+picture[] mainFlow = new picture[]
+    {pOrigin, pService, pV1, pV1ret, pV2, pV2ret,
+     pV3, pV3ret, pV4, pV5, pV6, pTransition, pV7, pLegacy};
+for (int i = 0; i < mainFlow.length - 1; ++i)
+    add(diagram, connect_pics(mainFlow[i], E, mainFlow[i+1], W, gap, arrowPen, Arrow(TeXHead)));
 
-// Branch arrows: main → battles (down)
-arrowV(diagram, pV1ret, S, pBattle1, N, gap, lightArrow);
-arrowV(diagram, pV2,    S, pBattle2, N, gap, lightArrow);
-arrowV(diagram, pV3,    S, pBattle3, N, gap, lightArrow);
+// Branch arrows: main → battles (down). srcDir=S, destDir=N => tangents
+// {S}..{-N=S}; aligned x => straight vertical lines.
+add(diagram, connect_pics(pV1ret,  S, pBattle1, N, gap, lightArrow, Arrow(TeXHead)));
+add(diagram, connect_pics(pV2,     S, pBattle2, N, gap, lightArrow, Arrow(TeXHead)));
+add(diagram, connect_pics(pV3,     S, pBattle3, N, gap, lightArrow, Arrow(TeXHead)));
 
-// Branch arrow: battle → main (up)
-arrowV(diagram, pBattle2, N, pV2ret, S, gap, lightArrow);
+// Branch arrow: battle → main (up). pBattle2 and pV2ret are offset in x;
+// {N}..{-S=N} produces a gentle diagonal S-curve (visually smoother than the
+// original straight `--` diagonal).
+add(diagram, connect_pics(pBattle2, N, pV2ret,       S, gap, lightArrow, Arrow(TeXHead)));
 
-// Detail arrows: main → upper detail (up)
-arrowV(diagram, pV7,     N, pV7detail,      S, gap, lightArrow);
-arrowV(diagram, pLegacy, N, pLegacyDetail,  S, gap, lightArrow);
+// Detail arrows: main → upper detail (up). Aligned x => straight vertical.
+add(diagram, connect_pics(pV7,     N, pV7detail,     S, gap, lightArrow, Arrow(TeXHead)));
+add(diagram, connect_pics(pLegacy, N, pLegacyDetail, S, gap, lightArrow, Arrow(TeXHead)));
 
-// --- Add all nodes on top of arrows ---
+// --- Add all nodes on top of connectors ---
 add(diagram, pOrigin);
 add(diagram, pService);
 add(diagram, pV1);      add(diagram, pV1ret);
