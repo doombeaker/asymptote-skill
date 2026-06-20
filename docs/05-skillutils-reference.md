@@ -11,16 +11,16 @@ cp <path-to-skill>/lib/skillutils.asy ~/.asy/
 
 ## label_box_pic
 
-Creates a labeled, filled, bordered box as a `picture`, shifted to `position`. This is the fundamental building block for modular diagram nodes.
+Creates a labeled, filled, bordered box as a `picture`, shifted to `boxPosition`. This is the fundamental building block for modular diagram nodes.
 
 ### Signatures
 
 ```asy
-picture label_box_pic(pair position, real box_width, real box_height,
+picture label_box_pic(pair boxPosition, real boxWidth, real boxHeight,
                       real lineDy, string[] lines,
                       pen label_text, pen fillPen, pen borderPen)
 
-picture label_box_pic(pair position, real box_width, real box_height,
+picture label_box_pic(pair boxPosition, real boxWidth, real boxHeight,
                       real lineDy, string text,
                       pen label_text, pen fillPen, pen borderPen)
 ```
@@ -31,9 +31,9 @@ The single-string overload wraps `text` into a one-element `string[]` and delega
 
 | Parameter | Type | Description |
 |---|---|---|
-| `position` | `pair` | Shift vector — box center lands at this point in the parent coordinate system |
-| `box_width` | `real` | Total width of the box (user units) |
-| `box_height` | `real` | Total height of the box (user units) |
+| `boxPosition` | `pair` | Shift vector — box center lands at this point in the parent coordinate system |
+| `boxWidth` | `real` | Total width of the box (user units) |
+| `boxHeight` | `real` | Total height of the box (user units) |
 | `lineDy` | `real` | Vertical spacing between consecutive text lines |
 | `lines` | `string[]` | Array of label strings, drawn top-to-bottom |
 | `label_text` | `pen` | Pen for label rendering (e.g. `fontsize(9pt)`, `fontsize(8pt) + rgb(0.5,0.5,0.5)`) |
@@ -55,7 +55,7 @@ picture pProc = label_box_pic((3, 0), 3.0, 0.9, 0.32, new string[]{"Process", "c
 
 add(diagram, pStart);
 add(diagram, pProc);
-pair anchor = point(pStart, S);  // query boundary — no bh/2 math needed
+pair anchor = point(pStart, S);  // query boundary — no boxHeight/2 math needed
 ```
 
 ---
@@ -67,16 +67,16 @@ Creates a rounded rectangle path. Used internally by `label_rounded_pic()`, but 
 ### Signature
 
 ```asy
-path roundbox(pair bl, pair tr, real r)
+path roundbox(pair bottomLeft, pair topRight, real radius)
 ```
 
 ### Parameters
 
 | Parameter | Type | Description |
 |---|---|---|
-| `bl` | `pair` | Bottom-left corner of the bounding rectangle |
-| `tr` | `pair` | Top-right corner of the bounding rectangle |
-| `r` | `real` | Corner radius (clamped to half the smaller dimension) |
+| `bottomLeft` | `pair` | Bottom-left corner of the bounding rectangle |
+| `topRight` | `pair` | Top-right corner of the bounding rectangle |
+| `radius` | `real` | Corner radius (clamped to half the smaller dimension) |
 
 ### Usage
 
@@ -91,16 +91,16 @@ filldraw(rbox, lightblue, blue);
 
 ## label_rounded_pic
 
-Creates a labeled, filled, bordered rounded box as a `picture`, shifted to `position`. Same interface as `label_box_pic()` with an additional `radius` parameter.
+Creates a labeled, filled, bordered rounded box as a `picture`, shifted to `boxPosition`. Same interface as `label_box_pic()` with an additional `radius` parameter.
 
 ### Signatures
 
 ```asy
-picture label_rounded_pic(pair position, real box_width, real box_height,
+picture label_rounded_pic(pair boxPosition, real boxWidth, real boxHeight,
                           real radius, real lineDy, string[] lines,
                           pen label_text, pen fillPen, pen borderPen)
 
-picture label_rounded_pic(pair position, real box_width, real box_height,
+picture label_rounded_pic(pair boxPosition, real boxWidth, real boxHeight,
                           real radius, real lineDy, string text,
                           pen label_text, pen fillPen, pen borderPen)
 ```
@@ -109,9 +109,9 @@ picture label_rounded_pic(pair position, real box_width, real box_height,
 
 | Parameter | Type | Description |
 |---|---|---|
-| `position` | `pair` | Shift vector — box center lands at this point in the parent coordinate system |
-| `box_width` | `real` | Total width of the box (user units) |
-| `box_height` | `real` | Total height of the box (user units) |
+| `boxPosition` | `pair` | Shift vector — box center lands at this point in the parent coordinate system |
+| `boxWidth` | `real` | Total width of the box (user units) |
+| `boxHeight` | `real` | Total height of the box (user units) |
 | `radius` | `real` | Corner radius (clamped to half the smaller dimension) |
 | `lineDy` | `real` | Vertical spacing between consecutive text lines |
 | `lines` | `string[]` | Array of label strings, drawn top-to-bottom |
@@ -185,7 +185,7 @@ Draws a fill+border rectangle enclosing all given pictures with padding, returne
 ### Signature
 
 ```asy
-picture pics_cluster(picture[] pics, real padx, real pady,
+picture pics_cluster(picture[] pics, real padX, real padY,
                      pen fillPen, pen borderPen)
 ```
 
@@ -194,8 +194,8 @@ picture pics_cluster(picture[] pics, real padx, real pady,
 | Parameter | Type | Description |
 |---|---|---|
 | `pics` | `picture[]` | Array of pictures to enclose |
-| `padx` | `real` | Horizontal padding between nodes' bbox and the box edge |
-| `pady` | `real` | Vertical padding between nodes' bbox and the box edge |
+| `padX` | `real` | Horizontal padding between nodes' bbox and the box edge |
+| `padY` | `real` | Vertical padding between nodes' bbox and the box edge |
 | `fillPen` | `pen` | Interior fill pen (`nullpen` for no fill) |
 | `borderPen` | `pen` | Outline stroke pen (`nullpen` for no border) |
 

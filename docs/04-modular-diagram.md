@@ -83,20 +83,20 @@ Any `pair` can be used as a direction — `point(pic, (1, 2))` returns the bound
 
 ```asy
 // 1. CREATE: component function draws at origin, returns a picture
-picture makeNode(string text, real bw, real bh, pen fillPen, pen borderPen) {
+picture makeNode(string text, real boxWidth, real boxHeight, pen fillPen, pen borderPen) {
     picture pic;
-    fill(pic, box((-bw/2, -bh/2), (bw/2, bh/2)), fillPen);
-    draw(pic, box((-bw/2, -bh/2), (bw/2, bh/2)), borderPen);
+    fill(pic, box((-boxWidth/2, -boxHeight/2), (boxWidth/2, boxHeight/2)), fillPen);
+    draw(pic, box((-boxWidth/2, -boxHeight/2), (boxWidth/2, boxHeight/2)), borderPen);
     label(pic, text, fontsize(9pt));
     return pic;
 }
 
 // 2. SHIFT: position each instance in the parent coordinate system
-real bw = 3, bh = 1;
-picture nodeA = shift(0,  2) * makeNode("Upper", bw, bh, lightblue, blue);
-picture nodeB = shift(0, -1) * makeNode("Lower", bw, bh, lightgreen, green);
+real boxWidth = 3, boxHeight = 1;
+picture nodeA = shift(0,  2) * makeNode("Upper", boxWidth, boxHeight, lightblue, blue);
+picture nodeB = shift(0, -1) * makeNode("Lower", boxWidth, boxHeight, lightgreen, green);
 
-// 3. POINT: query boundary anchors — no manual bh/2 needed
+// 3. POINT: query boundary anchors — no manual boxHeight/2 needed
 pair aSouth = point(nodeA, S);   // bottom edge of nodeA
 pair bNorth = point(nodeB, N);   // top edge of nodeB
 
@@ -126,7 +126,7 @@ draw(dest, start -- end, arrow = Arrow(TeXHead));
 
 | Approach | Moving a node | Different box sizes | Code clarity |
 |----------|--------------|---------------------|-------------|
-| `center.y - bh/2 - gap` | Must update every arrow | Must know each node's `bh` | Scattered magic numbers |
+| `center.y - boxHeight/2 - gap` | Must update every arrow | Must know each node's `boxHeight` | Scattered magic numbers |
 | `point(node, S) - (0, gap)` | Just change `shift()` | Automatic | Self-documenting |
 
 ### Related Functions
@@ -159,8 +159,8 @@ All diagram parameters should be defined at the top as named constants. This mak
 import skillutils;
 
 // Box dimensions — still needed for component function parameters
-real bw       = 3.0;    // Box width
-real bh       = 0.9;    // Box height
+real boxWidth       = 3.0;    // Box width
+real boxHeight       = 0.9;    // Box height
 real gap      = 0.2;    // Gap between box edge and arrow tip
 
 // Layout grid
@@ -171,7 +171,7 @@ real yTop     = 10;     // Top of the diagram
 real dy       = 1.5;    // Vertical step between nodes
 ```
 
-**Key difference from raw-coordinate approach:** You define `bw` and `bh` once for the component function, but you **never** write `bh/2` or `bw/2` in arrow code — `point()` handles that automatically.
+**Key difference from raw-coordinate approach:** You define `boxWidth` and `boxHeight` once for the component function, but you **never** write `boxHeight/2` or `boxWidth/2` in arrow code — `point()` handles that automatically.
 
 ### 3.2 `label_box_pic()` — Rectangular Node
 
@@ -182,21 +182,22 @@ import skillutils;
 
 // label_box_pic signature (from skillutils.asy):
 //
-//   picture label_box_pic(pair position, real box_width, real box_height,
+//   picture label_box_pic(pair boxPosition, real boxWidth, real boxHeight,
 //                         real lineDy, string[] lines,
 //                         pen label_text, pen fillPen, pen borderPen)
 //
 // Key features:
-//   - position param: the box is shifted to position internally,
-//     so you call label_box_pic((x, y), bw, bh, ...) directly
-//     instead of shift(x, y) * label_box_pic(bw, bh, ...)
+//   - boxPosition param: the box is shifted to boxPosition internally,
+//     so you call label_box_pic((x, y), boxWidth, boxHeight, ...) directly
+//     instead of shift(x, y) * label_box_pic(boxWidth, boxHeight, ...)
 //   - label_text pen param: full control over font size, color, weight.
-//   - Params named box_width/box_height for clarity (not bw/bh).
+//   - Descriptive camelCase param names (boxWidth, boxHeight) avoid
+//     collisions with Asymptote stdlib identifiers.
 //
 // Usage — create, then add to parent:
-picture box1 = label_box_pic((0, 2), bw, bh, 0.32, "Gateway",
+picture box1 = label_box_pic((0, 2), boxWidth, boxHeight, 0.32, "Gateway",
                              fontsize(9pt), gatewayFill, gatewayBorder);
-picture box2 = label_box_pic((0, -1), bw, bh, 0.32,
+picture box2 = label_box_pic((0, -1), boxWidth, boxHeight, 0.32,
                              new string[]{"Pod 1", "Agent + UI"},
                              fontsize(9pt), workerFill, workerBorder);
 
@@ -206,8 +207,8 @@ add(diagram, box2);
 ```
 
 **Why `picture` instead of `void`?**
-- `point(box1, S)` gives the south boundary — no `bh/2` math needed
-- Moving a node only requires changing the `position` argument — all arrows follow automatically
+- `point(box1, S)` gives the south boundary — no `boxHeight/2` math needed
+- Moving a node only requires changing the `boxPosition` argument — all arrows follow automatically
 - The same component function produces nodes of any size — `point()` adapts
 
 ### 3.3 `label_rounded_pic()` — Rounded Corner Node
@@ -219,7 +220,7 @@ import skillutils;
 
 // label_rounded_pic signature (from skillutils.asy):
 //
-//   picture label_rounded_pic(pair position, real box_width, real box_height,
+//   picture label_rounded_pic(pair boxPosition, real boxWidth, real boxHeight,
 //                             real radius, real lineDy, string[] lines,
 //                             pen label_text, pen fillPen, pen borderPen)
 //
@@ -227,9 +228,9 @@ import skillutils;
 // clamped to half the smaller dimension, so you cannot overshoot.
 //
 // Usage:
-picture card1 = label_rounded_pic((0, 2), bw, bh, 0.2, 0.32, "Service A",
+picture card1 = label_rounded_pic((0, 2), boxWidth, boxHeight, 0.2, 0.32, "Service A",
                                   fontsize(9pt), svcFill, svcBorder);
-picture card2 = label_rounded_pic((0, -1), bw, bh, 0.2, 0.32,
+picture card2 = label_rounded_pic((0, -1), boxWidth, boxHeight, 0.2, 0.32,
                                   new string[]{"Service B", "v2.1"},
                                   fontsize(9pt), svcFill, svcBorder);
 
@@ -238,13 +239,13 @@ add(diagram, card1);
 add(diagram, card2);
 ```
 
-The underlying path helper `roundbox(bl, tr, r)` is also exported from `skillutils` if you need rounded rectangle paths directly:
+The underlying path helper `roundbox(bottomLeft, topRight, radius)` is also exported from `skillutils` if you need rounded rectangle paths directly:
 
 ```asy
 // roundbox signature:
-//   path roundbox(pair bl, pair tr, real r)
+//   path roundbox(pair bottomLeft, pair topRight, real radius)
 //
-// Returns a cyclic path tracing a rounded rectangle from (bl.x, bl.y+r)
+// Returns a cyclic path tracing a rounded rectangle from (bottomLeft.x, bottomLeft.y+radius)
 // clockwise through all four rounded corners.
 path rbox = roundbox((0, 0), (4, 2), 0.3);
 filldraw(rbox, lightblue, blue);
@@ -255,18 +256,18 @@ filldraw(rbox, lightblue, blue);
 You can define your own `picture`-returning components following the same pattern:
 
 ```asy
-picture diamondNode(pair position, real w, real h, string text,
+picture diamondNode(pair boxPosition, real w, real h, string text,
                     pen labelPen, pen fillPen, pen borderPen) {
     picture pic;
     pair top = (0, h/2), bot = (0, -h/2);
     pair left = (-w/2, 0), right = (w/2, 0);
     filldraw(pic, top--right--bot--left--cycle, fillPen, borderPen);
     label(pic, text, (0, 0), labelPen);
-    return shift(position) * pic;
+    return shift(boxPosition) * pic;
 }
 ```
 
-Any shape works — the key is: **draw at origin, return `shift(position) * pic`**. Then `point()` anchors work regardless of shape or size.
+Any shape works — the key is: **draw at origin, return `shift(boxPosition) * pic`**. Then `point()` anchors work regardless of shape or size.
 
 ---
 
@@ -274,7 +275,7 @@ Any shape works — the key is: **draw at origin, return `shift(position) * pic`
 
 ### 4.1 Arrow Helpers Using `point()`
 
-Arrow helpers take `picture` arguments and use `point()` to find boundary anchors. No manual `bh/2 + gap` calculations.
+Arrow helpers take `picture` arguments and use `point()` to find boundary anchors. No manual `boxHeight/2 + gap` calculations.
 
 ```asy
 // ==========================================
@@ -378,7 +379,7 @@ Use `pics_cluster()` from `skillutils.asy` to draw a background rectangle enclos
 import skillutils;
 
 // pics_cluster signature:
-//   picture pics_cluster(picture[] pics, real padx, real pady,
+//   picture pics_cluster(picture[] pics, real padX, real padY,
 //                        pen fillPen, pen borderPen)
 //
 // Returns a picture containing the background rectangle. Add it
@@ -410,8 +411,8 @@ import skillutils;
 // Returns a 2-element pair array: {bottomLeft, topRight}.
 
 pair[] bb = pics_bbox(new picture[]{pA, pB, pC});
-pair lo = bb[0];  // overall bottom-left (min x, min y)
-pair hi = bb[1];  // overall top-right  (max x, max y)
+pair lowCorner = bb[0];  // overall bottom-left (min x, min y)
+pair highCorner = bb[1];  // overall top-right  (max x, max y)
 ```
 
 Uses `point(pic, SW)` / `point(pic, NE)` instead of `min()`/`max()` to avoid the PostScript coordinate trap on standalone sub-pictures. See §2 gotcha for details.
@@ -466,7 +467,7 @@ import skillutils;
 // ==========================================
 // VERTICAL WORKFLOW WITH PARALLEL BRANCHES
 // ==========================================
-real bw = 3.0, bh = 0.9, lineDy = 0.32, gap = 0.2;
+real boxWidth = 3.0, boxHeight = 0.9, lineDy = 0.32, gap = 0.2;
 real xMain = 0, xLeft = -2.8, xRight = 2.8, yTop = 0, dy = 1.6;
 
 pen textPen = fontsize(9pt);
@@ -477,11 +478,11 @@ pen cookFill = rgb(1.00, 0.92, 0.85), cookBorder = rgb(0.60, 0.35, 0.15) + linew
 pen arrowPen = rgb(0.30, 0.20, 0.10) + linewidth(0.9);
 
 // --- Create and position nodes ---
-picture pStart = label_box_pic((xMain,  yTop),          bw, bh, lineDy, "Start", textPen, doneFill, doneBorder);
-picture pPrep  = label_box_pic((xMain,  yTop - dy),     bw, bh, lineDy, new string[]{"Prep", "wash & measure"}, textPen, prepFill, prepBorder);
-picture pCut   = label_box_pic((xLeft,  yTop - 2*dy),   bw, bh, lineDy, "Cut", textPen, prepFill, prepBorder);
-picture pBeat  = label_box_pic((xRight, yTop - 2*dy),   bw, bh, lineDy, "Beat", textPen, prepFill, prepBorder);
-picture pCook  = label_box_pic((xMain,  yTop - 3*dy),   bw, bh, lineDy, "Cook", textPen, cookFill, cookBorder);
+picture pStart = label_box_pic((xMain,  yTop),          boxWidth, boxHeight, lineDy, "Start", textPen, doneFill, doneBorder);
+picture pPrep  = label_box_pic((xMain,  yTop - dy),     boxWidth, boxHeight, lineDy, new string[]{"Prep", "wash & measure"}, textPen, prepFill, prepBorder);
+picture pCut   = label_box_pic((xLeft,  yTop - 2*dy),   boxWidth, boxHeight, lineDy, "Cut", textPen, prepFill, prepBorder);
+picture pBeat  = label_box_pic((xRight, yTop - 2*dy),   boxWidth, boxHeight, lineDy, "Beat", textPen, prepFill, prepBorder);
+picture pCook  = label_box_pic((xMain,  yTop - 3*dy),   boxWidth, boxHeight, lineDy, "Cook", textPen, cookFill, cookBorder);
 
 // --- Assemble ---
 picture diagram;
@@ -512,7 +513,7 @@ import skillutils;
 // ==========================================
 // HORIZONTAL PIPELINE
 // ==========================================
-real bw = 3.0, bh = 0.9, lineDy = 0.32, gap = 0.2;
+real boxWidth = 3.0, boxHeight = 0.9, lineDy = 0.32, gap = 0.2;
 real yMain = 0, dx = 4.0, xStart = -6;
 
 pen textPen = fontsize(9pt);
@@ -524,10 +525,10 @@ pen resFill  = rgb(0.9, 1.0, 0.95),      resBorder  = rgb(0.2, 0.5, 0.4) + linew
 pen arrowPen = rgb(0.2, 0.2, 0.2) + linewidth(0.9);
 
 // --- Create and position nodes ---
-picture pUser    = label_box_pic((xStart,              yMain), bw, bh, lineDy, "User",    textPen, userFill, userBorder);
-picture pGateway = label_box_pic((xStart + dx,         yMain), bw, bh, lineDy, "Gateway", textPen, gateFill, gateBorder);
-picture pCore    = label_box_pic((xStart + 2*dx,       yMain), bw, bh, lineDy, "Core",    textPen, workFill, workBorder);
-picture pResult  = label_box_pic((xStart + 3*dx,       yMain), bw, bh, lineDy, "Result",  textPen, resFill,  resBorder);
+picture pUser    = label_box_pic((xStart,              yMain), boxWidth, boxHeight, lineDy, "User",    textPen, userFill, userBorder);
+picture pGateway = label_box_pic((xStart + dx,         yMain), boxWidth, boxHeight, lineDy, "Gateway", textPen, gateFill, gateBorder);
+picture pCore    = label_box_pic((xStart + 2*dx,       yMain), boxWidth, boxHeight, lineDy, "Core",    textPen, workFill, workBorder);
+picture pResult  = label_box_pic((xStart + 3*dx,       yMain), boxWidth, boxHeight, lineDy, "Result",  textPen, resFill,  resBorder);
 
 // --- Assemble ---
 picture diagram;
@@ -556,7 +557,7 @@ import skillutils;
 // ==========================================
 // CLUSTER WITH DISPATCH
 // ==========================================
-real bw = 3.0, bh = 0.9, lineDy = 0.32, gap = 0.2;
+real boxWidth = 3.0, boxHeight = 0.9, lineDy = 0.32, gap = 0.2;
 
 pen textPen = fontsize(9pt);
 
@@ -565,10 +566,10 @@ pen workerFill  = rgb(1.0, 0.95, 0.8),  workerBorder = rgb(0.5, 0.4, 0.15) + lin
 pen clusterFill = rgb(0.96, 0.96, 1.0), clusterPen   = rgb(0.3, 0.3, 0.6) + linewidth(1.8);
 pen dispatchPen = gray(0.5) + linewidth(0.7) + dashed;
 
-picture pRouter = label_box_pic((5.5, -0.5), bw, bh, lineDy, new string[]{"Router", "Unique Instance"}, textPen, routerFill, routerBorder);
-picture pPod1   = label_box_pic((3.0, -2.5), bw, bh, lineDy, new string[]{"Pod 1", "Agent + UI"}, textPen, workerFill, workerBorder);
-picture pPod2   = label_box_pic((5.5, -2.5), bw, bh, lineDy, new string[]{"Pod 2", "Agent + UI"}, textPen, workerFill, workerBorder);
-picture pPod3   = label_box_pic((8.0, -2.5), bw, bh, lineDy, new string[]{"Pod N", "Agent + UI"}, textPen, workerFill, workerBorder);
+picture pRouter = label_box_pic((5.5, -0.5), boxWidth, boxHeight, lineDy, new string[]{"Router", "Unique Instance"}, textPen, routerFill, routerBorder);
+picture pPod1   = label_box_pic((3.0, -2.5), boxWidth, boxHeight, lineDy, new string[]{"Pod 1", "Agent + UI"}, textPen, workerFill, workerBorder);
+picture pPod2   = label_box_pic((5.5, -2.5), boxWidth, boxHeight, lineDy, new string[]{"Pod 2", "Agent + UI"}, textPen, workerFill, workerBorder);
+picture pPod3   = label_box_pic((8.0, -2.5), boxWidth, boxHeight, lineDy, new string[]{"Pod N", "Agent + UI"}, textPen, workerFill, workerBorder);
 
 picture diagram;
 size(diagram, 12cm);
@@ -718,10 +719,10 @@ pen resultBorder = rgb(0.2, 0.5, 0.4) + linewidth(1.2);
 | Element | Usage | Style |
 |---------|-------|-------|
 | Component box | Individual service/node/stage | `label_box_pic()` or `label_rounded_pic()` from `skillutils.asy` |
-| Component placement | Positioning in parent picture | `label_box_pic((x, y), bw, bh, ...)` — position baked in |
-| Arrow endpoints | Connecting nodes | `point(node, dir)` — no manual `bh/2` math |
-| Cluster box | Group of related components | `pics_cluster(pics, padx, pady, fillPen, borderPen)` — auto-computed |
-| Dashed group | Logical/optional grouping | `pics_cluster(pics, padx, pady, nullpen, borderPen)` |
+| Component placement | Positioning in parent picture | `label_box_pic((x, y), boxWidth, boxHeight, ...)` — position baked in |
+| Arrow endpoints | Connecting nodes | `point(node, dir)` — no manual `boxHeight/2` math |
+| Cluster box | Group of related components | `pics_cluster(pics, padX, padY, fillPen, borderPen)` — auto-computed |
+| Dashed group | Logical/optional grouping | `pics_cluster(pics, padX, padY, nullpen, borderPen)` |
 | Solid arrow | Primary data/control flow | `Arrow(TeXHead)`, 0.9bp |
 | Dashed arrow | Internal dispatch, secondary flow | Gray, dashed, 0.7bp |
 | Curved arrow | Avoid crossing other lines | Bezier curve with `{dir}..{dir}` |
@@ -747,8 +748,8 @@ import skillutils;
 // ------------------------------------------
 // CONFIGURATION
 // ------------------------------------------
-real bw         = 3.8;
-real bh         = 1.2;
+real boxWidth         = 3.8;
+real boxHeight         = 1.2;
 real lineDy     = 0.36;
 real gap        = 0.2;
 real dx         = 4.5;
@@ -771,13 +772,13 @@ pen dispatchPen  = gray(0.5) + linewidth(0.7) + dashed;
 // ------------------------------------------
 // CREATE AND POSITION NODES
 // ------------------------------------------
-picture pUser    = label_box_pic((xStart,              yTop),        bw, bh, lineDy, new string[]{"User", "bizyair.cn Canvas"}, textPen, userColor, userBorder);
-picture pSCX     = label_box_pic((xStart + dx,         yTop),        bw, bh, lineDy, new string[]{"SCX Gateway", "Auth, Quota, Billing"}, textPen, gatewayColor, gatewayBorder);
-picture pCGR     = label_box_pic((xStart + 3*dx,       yTop - 1.5), bw, bh, lineDy, new string[]{"CGR Router", "Unique Instance"}, textPen, routerColor, routerBorder);
-picture pPod1    = label_box_pic((xStart + 2.5*dx,     yBot),        bw, bh, lineDy, new string[]{"Pod 1", "ComfyAgent + ComfyUI"}, textPen, podColor, podBorder);
-picture pPod2    = label_box_pic((xStart + 3.5*dx,     yBot),        bw, bh, lineDy, new string[]{"Pod 2", "ComfyAgent + ComfyUI"}, textPen, podColor, podBorder);
-picture pPodN    = label_box_pic((xStart + 5.5*dx,     yBot),        bw, bh, lineDy, new string[]{"Pod N", "ComfyAgent + ComfyUI"}, textPen, podColor, podBorder);
-picture pResult  = label_box_pic((xStart + 7.0*dx,     (yTop+yBot)/2), bw, bh, lineDy, new string[]{"Result", "Image / Video / Data"}, textPen, resultColor, resultBorder);
+picture pUser    = label_box_pic((xStart,              yTop),        boxWidth, boxHeight, lineDy, new string[]{"User", "bizyair.cn Canvas"}, textPen, userColor, userBorder);
+picture pSCX     = label_box_pic((xStart + dx,         yTop),        boxWidth, boxHeight, lineDy, new string[]{"SCX Gateway", "Auth, Quota, Billing"}, textPen, gatewayColor, gatewayBorder);
+picture pCGR     = label_box_pic((xStart + 3*dx,       yTop - 1.5), boxWidth, boxHeight, lineDy, new string[]{"CGR Router", "Unique Instance"}, textPen, routerColor, routerBorder);
+picture pPod1    = label_box_pic((xStart + 2.5*dx,     yBot),        boxWidth, boxHeight, lineDy, new string[]{"Pod 1", "ComfyAgent + ComfyUI"}, textPen, podColor, podBorder);
+picture pPod2    = label_box_pic((xStart + 3.5*dx,     yBot),        boxWidth, boxHeight, lineDy, new string[]{"Pod 2", "ComfyAgent + ComfyUI"}, textPen, podColor, podBorder);
+picture pPodN    = label_box_pic((xStart + 5.5*dx,     yBot),        boxWidth, boxHeight, lineDy, new string[]{"Pod N", "ComfyAgent + ComfyUI"}, textPen, podColor, podBorder);
+picture pResult  = label_box_pic((xStart + 7.0*dx,     (yTop+yBot)/2), boxWidth, boxHeight, lineDy, new string[]{"Result", "Image / Video / Data"}, textPen, resultColor, resultBorder);
 
 // ------------------------------------------
 // ASSEMBLE DIAGRAM
@@ -856,8 +857,8 @@ import skillutils;
 // WORKFLOW: TOMATO SCRAMBLED EGGS
 // ==========================================
 
-real bw       = 3.0;
-real bh       = 0.9;
+real boxWidth       = 3.0;
+real boxHeight       = 0.9;
 real lineDy   = 0.32;
 real gap      = 0.25;
 real nodeDy   = 1.6;
@@ -912,16 +913,16 @@ void arrowJoinRight(picture dest, picture side, picture main) {
 // ------------------------------------------
 // BUILD DIAGRAM
 // ------------------------------------------
-picture pStart  = label_box_pic((xMain,            y0),            bw, bh, lineDy, "Start", textPen, doneFill, doneBorder);
-picture pPrep   = label_box_pic((xMain,            y0 - nodeDy),  bw, bh, lineDy, new string[]{"Prep", "wash \& measure"}, textPen, prepFill, prepBorder);
-picture pCut    = label_box_pic((xLeftB,            y0 - 2*nodeDy), bw, bh, lineDy, "Cut Tomato", textPen, prepFill, prepBorder);
-picture pBeat   = label_box_pic((xRightB,           y0 - 2*nodeDy), bw, bh, lineDy, "Beat Eggs", textPen, prepFill, prepBorder);
-picture pHeat   = label_box_pic((xMain,             y0 - 3*nodeDy), bw, bh, lineDy, "Heat Oil", textPen, cookFill, cookBorder);
-picture pFryE   = label_box_pic((xMain,             y0 - 4*nodeDy), bw, bh, lineDy, "Fry Eggs", textPen, cookFill, cookBorder);
-picture pFryT   = label_box_pic((xMain,             y0 - 5*nodeDy), bw, bh, lineDy, "Fry Tomato", textPen, cookFill, cookBorder);
-picture pMix    = label_box_pic((xMain,             y0 - 6*nodeDy), bw, bh, lineDy, "Mix", textPen, cookFill, cookBorder);
-picture pSeason = label_box_pic((xMain,             y0 - 7*nodeDy), bw, bh, lineDy, "Season", textPen, cookFill, cookBorder);
-picture pDone   = label_box_pic((xMain,             y0 - 8*nodeDy), bw, bh, lineDy, "Serve", textPen, doneFill, doneBorder);
+picture pStart  = label_box_pic((xMain,            y0),            boxWidth, boxHeight, lineDy, "Start", textPen, doneFill, doneBorder);
+picture pPrep   = label_box_pic((xMain,            y0 - nodeDy),  boxWidth, boxHeight, lineDy, new string[]{"Prep", "wash \& measure"}, textPen, prepFill, prepBorder);
+picture pCut    = label_box_pic((xLeftB,            y0 - 2*nodeDy), boxWidth, boxHeight, lineDy, "Cut Tomato", textPen, prepFill, prepBorder);
+picture pBeat   = label_box_pic((xRightB,           y0 - 2*nodeDy), boxWidth, boxHeight, lineDy, "Beat Eggs", textPen, prepFill, prepBorder);
+picture pHeat   = label_box_pic((xMain,             y0 - 3*nodeDy), boxWidth, boxHeight, lineDy, "Heat Oil", textPen, cookFill, cookBorder);
+picture pFryE   = label_box_pic((xMain,             y0 - 4*nodeDy), boxWidth, boxHeight, lineDy, "Fry Eggs", textPen, cookFill, cookBorder);
+picture pFryT   = label_box_pic((xMain,             y0 - 5*nodeDy), boxWidth, boxHeight, lineDy, "Fry Tomato", textPen, cookFill, cookBorder);
+picture pMix    = label_box_pic((xMain,             y0 - 6*nodeDy), boxWidth, boxHeight, lineDy, "Mix", textPen, cookFill, cookBorder);
+picture pSeason = label_box_pic((xMain,             y0 - 7*nodeDy), boxWidth, boxHeight, lineDy, "Season", textPen, cookFill, cookBorder);
+picture pDone   = label_box_pic((xMain,             y0 - 8*nodeDy), boxWidth, boxHeight, lineDy, "Serve", textPen, doneFill, doneBorder);
 
 // --- Assemble ---
 picture diagram;
@@ -953,7 +954,7 @@ label(diagram, "\textbf{Workflow: Tomato Scrambled Eggs}",
 real xAnnotLeft  = xLeftB  - 2.2;
 real xAnnotRight = xRightB + 2.2;
 
-label(diagram, "Ingredients", (xAnnotLeft,  point(pPrep,   N).y - bh/2), fontsize(8pt));
+label(diagram, "Ingredients", (xAnnotLeft,  point(pPrep,   N).y - boxHeight/2), fontsize(8pt));
 label(diagram, "Tomato",      (xAnnotLeft,  point(pCut,  S).y + 0.35), fontsize(8pt));
 label(diagram, "Eggs",        (xAnnotLeft,  point(pBeat, S).y - 0.35), fontsize(8pt));
 label(diagram, "Cooking",     (xAnnotLeft,  point(pHeat, S).y),        fontsize(8pt));
@@ -1079,7 +1080,7 @@ shipout(final);
 
 ### Pitfall 1: Computing Arrow Endpoints Manually
 
-Use `point(node, S)` instead of `center.y - bh/2 - gap`. `point()` adapts automatically to any box size and transform.
+Use `point(node, S)` instead of `center.y - boxHeight/2 - gap`. `point()` adapts automatically to any box size and transform.
 
 ### Pitfall 2: Overcrowding Nodes
 
@@ -1166,7 +1167,7 @@ for (int i = 0; i < 3; ++i) {
 | Unified coordinates | `add(dest, src)` (no fit) |
 | Query boundary anchor | `point(pic, dir)` where `dir` is `N`/`S`/`E`/`W`/`NE`/etc. |
 | Query bbox (safe) | `pics_bbox(pics)` from skillutils — returns `{bottomLeft, topRight}` |
-| Cluster background | `pics_cluster(pics, padx, pady, fill, border)` from skillutils |
+| Cluster background | `pics_cluster(pics, padX, padY, fill, border)` from skillutils |
 | Connect nodes vertically | `arrowDown(dest, top, bot, gap, pen)` helper |
 | Connect nodes horizontally | `arrowH(dest, left, right, gap, pen)` helper |
 | Branch to two children | `arrowBranch(dest, parent, leftChild, rightChild, gap, pen)` helper |

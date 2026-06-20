@@ -263,11 +263,11 @@ label("$C$", pointC, NW);
 For repeated visual elements (circuit symbols, custom arrows, grid nodes), define reusable functions rather than duplicating code.
 
 For flowchart/system diagrams specifically, use the shared `skillutils` library which provides:
-- **`label_box_pic(position, width, height, lineDy, lines, labelPen, fillPen, borderPen)`** — creates a positioned, styled label box as a `picture`
-- **`label_rounded_pic(position, width, height, radius, lineDy, lines, labelPen, fillPen, borderPen)`** — same as `label_box_pic` but with rounded corners
-- **`roundbox(bl, tr, r)`** — creates a rounded rectangle path
+- **`label_box_pic(boxPosition, boxWidth, boxHeight, lineDy, lines, labelPen, fillPen, borderPen)`** — creates a positioned, styled label box as a `picture`
+- **`label_rounded_pic(boxPosition, boxWidth, boxHeight, radius, lineDy, lines, labelPen, fillPen, borderPen)`** — same as `label_box_pic` but with rounded corners
+- **`roundbox(bottomLeft, topRight, radius)`** — creates a rounded rectangle path
 - **`pics_bbox(pictures)`** — safely computes combined bounding box using `point()` (avoids `min()`/`max()` coordinate trap)
-- **`pics_cluster(pictures, padx, pady, fillPen, borderPen)`** — draws a background cluster box auto-sized from its contents
+- **`pics_cluster(pictures, padX, padY, fillPen, borderPen)`** — draws a background cluster box auto-sized from its contents
 
 **How to use `skillutils.asy`:** All generated code uses `import skillutils;` to access these functions. For this to work, `skillutils.asy` must be on Asymptote's module search path. Install it once by copying to `~/.asy` (one of Asymptote's default search paths):
 
