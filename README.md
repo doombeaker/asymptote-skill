@@ -12,6 +12,7 @@ Asymptote is a powerful descriptive vector graphics language that provides a mat
 - **Scientific Graphs**: 2D function plots, data visualization, parametric curves, polar plots, error bars, vector fields
 - **Flowcharts**: Block diagrams, algorithm visualization using default Asymptote primitives
 - **Picture Composition**: Reusable components, layered drawings, subplots, overlays using `add(picture, picture)`
+- **Hand-Drawn Style**: Sketch-like, wobbly-line drawings using the `trembling` module for informal or artistic visuals
 
 ## Structure
 
@@ -30,12 +31,14 @@ Asymptote is a powerful descriptive vector graphics language that provides a mat
 │   ├── geometric_*.asy   # 2D geometric drawing templates
 │   ├── scientific_*.asy  # Scientific graph templates
 │   ├── *_flowchart.asy  # Flowchart templates
-│   └── *_diagram.asy    # System architecture templates
+│   ├── *_diagram.asy    # System architecture templates
+│   └── trembling_*.asy  # Hand-drawn / sketch-style templates
 └── vendor/               # Reference source files
     ├── asymptote.texi    # Asymptote user manual
     ├── geometry.asy      # Geometry module source
     ├── graph.asy         # Graph module source
-    └── colormap.asy      # Colormap module source
+    ├── colormap.asy      # Colormap module source
+    └── trembling.asy     # Hand-drawn path deformation module source
 ```
 
 ## Installation
@@ -124,6 +127,7 @@ This skill enforces the following principles for all generated code:
 4. **Clean aesthetics**: Minimal text in diagram elements (1-3 words per flowchart block), consistent styling, effective whitespace
 5. **Picture-based composition**: Encapsulate repeated elements in `picture` functions, compose with `add(dest, src)`, and apply transforms (`shift`, `rotate`) before adding
 6. **Shared utilities**: Use `import skillutils;` for common diagram building blocks (`label_box_pic`, `label_rounded_pic`, `roundbox`, `pics_bbox`, `pics_cluster`)
+7. **Hand-drawn style**: When the user asks for sketch-like, informal, or artistic visuals (e.g. "手绘风格", "hand-drawn", "wobbly lines", "sketch"), use `import trembling;` and apply `tremble.deform()` to paths before drawing. See `templates/trembling_*.asy` for examples.
 
 ## Output Formats
 

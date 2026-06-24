@@ -829,3 +829,44 @@ unitsize(1cm);                     // 1 user unit = 1 cm
 // asy -f svg file.asy
 // asy -f png file.asy    (requires ImageMagick)
 ```
+
+---
+
+## 11. Hand-Drawn Style with `trembling`
+
+The `trembling` module provides **path deformation** that makes lines look hand-drawn or sketched. Use it when the user asks for a casual, informal, or artistic visual style.
+
+### Trigger Keywords
+
+Request for any of these should activate the `trembling` module:
+- **Chinese**: "手绘风格", "手绘体", "随意线条", "草稿风格"
+- **English**: "hand-drawn", "sketch style", "wobbly lines", "rough drawing", "casual style"
+
+### Basic Usage
+
+```asy
+import trembling;
+
+// Create a tremble instance
+tremble T = tremble(angle=4, frequency=0.5, random=2);
+
+// Deform a path before drawing
+path smooth = circle((0,0), 1);
+path sketch = T.deform(smooth);
+draw(sketch);
+```
+
+### Parameters
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `angle` | 4 | Rotation amplitude in degrees. Higher = more wobble. |
+| `frequency` | 0.5 | Node density. <1 adds extra nodes; ≥1 uses one node per floor(frequency). |
+| `random` | 2 | Randomization strength. 0 = deterministic; higher = more chaotic. |
+
+### Design Notes
+
+- `trembling` operates on `path` objects, not on `picture` components. To make a `skillutils` box look hand-drawn, you would need to draw its border with a trembled path rather than using the standard `draw(pic, box(...))`.
+- The effect is **not suitable** for precise technical diagrams or formal publications.
+- See `templates/trembling_*.asy` for working examples.
+

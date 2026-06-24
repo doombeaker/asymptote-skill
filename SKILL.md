@@ -18,6 +18,7 @@ This skill enables the agent to generate high-quality technical vector graphics 
 - **2D Geometric Drawings**: Points, lines, circles, polygons, curves, transformations
 - **Scientific Graphs**: 2D function plots, data visualization, parametric curves, polar plots
 - **Flowcharts**: Block diagrams, algorithm visualization using default primitives
+- **Hand-Drawn Style**: Sketch-like drawings with wobbly lines using the `trembling` module (triggered by requests for "手绘风格", "hand-drawn", "sketch", or "wobbly lines")
 
 ## Skill Structure
 
@@ -53,6 +54,11 @@ The `templates/` directory contains production-ready Asymptote files that demons
 - `modular_flowchart.asy` — Modular flowchart with parallel branches and curved arrows
 - `system_diagram.asy` — System architecture with clusters and hierarchical layout
 
+**Hand-Drawn Style:**
+- `trembling_basic_shapes.asy` — Basic trembling effect on circle, square, and line
+- `trembling_parameters.asy` — Parameter comparison (angle, frequency, random)
+- `trembling_handdrawn_geometry.asy` — Hand-drawn style geometric diagram with triangle, altitude, and median
+
 ## How to Use
 
 1. **Identify the drawing type** from the user's request
@@ -74,6 +80,7 @@ The `templates/` directory contains production-ready Asymptote files that demons
 - `geometry` — advanced geometric constructions (points, lines, circles, triangles, conics)
 - `graph` — scientific plotting (functions, data, axes, ticks, error bars)
 - `colormap` — matplotlib-compatible color palettes for data visualization
+- `trembling` — hand-drawn path deformation for sketch-like visuals (wobbly lines)
 
 ## Output Formats
 
