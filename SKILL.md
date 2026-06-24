@@ -32,6 +32,7 @@ This skill is organized into documentation files, utility libraries, and ready-t
 | `docs/04-modular-diagram.md` | Modular diagram construction with `picture` + `point()`: components, arrows, clusters, subplots, overlays |
 | `docs/05-skillutils-reference.md` | Skillutils API reference: signatures, parameters, and usage examples |
 | `lib/skillutils.asy` | Shared utility library: `label_box_pic`, `label_rounded_pic`, `roundbox`, `pics_bbox`, `pics_cluster` — `import skillutils;` |
+| `scripts/asy_render.py` | Network rendering client — renders `.asy` source via a remote asyagent service when local `asy` is unavailable (see Rendering below) |
 | `templates/` | Ready-to-use templates for common drawing types (see list below) |
 
 ### Templates
@@ -82,13 +83,50 @@ The `templates/` directory contains production-ready Asymptote files that demons
 - `colormap` — matplotlib-compatible color palettes for data visualization
 - `trembling` — hand-drawn path deformation for sketch-like visuals (wobbly lines)
 
-## Output Formats
+## Rendering: Compiling Source to Images
 
-Asymptote supports multiple output formats:
-- **PDF** (default): `asy -f pdf file.asy`
-- **EPS/PS**: `asy file.asy`
-- **SVG**: `asy -f svg file.asy`
-- **PNG/JPG** (via ImageMagick): `asy -f png file.asy`
+This skill offers **two rendering paths** to turn `.asy` source into an image file. Choose the path per the priority below — the agent should **not** ask the user which to use unless both are ambiguous or both fail.
+
+### Path Selection (in priority order)
+
+1. **User explicitly specifies** — if the user says "用本地编译" / "use local asy" / "用网络渲染" / "use the render script" / "用 asy_render" etc., follow their choice. No detection needed.
+2. **Local `asy` available (default)** — run `command -v asy && asy --version`. If it succeeds, compile locally with `asy`.
+3. **Fallback to network rendering** — if `asy` is not on PATH (or `asy --version` fails), use `scripts/asy_render.py`, which sends the source to a remote asyagent HTTP service and saves the rendered image.
+
+Run the detection once per session and reuse the decision; do not re-detect on every render.
+
+### Path A: Local Compilation
+
+```bash
+asy -f <pdf|svg|eps> -o <output_file> <source>.asy
+# PNG/JPG requires ImageMagick:
+asy -f png -o preview.png <source>.asy
+```
+
+Native formats: **pdf** (default), **svg**, **eps**. Raster (**png**, **jpg**) needs ImageMagick installed. For CJK labels, `import skillutils;` (or manual `xelatex`+`ctex` config) is required — see the `skillutils` install note in the structure table above.
+
+### Path B: Network Rendering (`scripts/asy_render.py`)
+
+```bash
+python3 <skill_dir>/scripts/asy_render.py -f <source>.asy -F <svg|pdf|png> -o <output_file>
+# Inline source instead of a file:
+python3 <skill_dir>/scripts/asy_render.py -s 'size(5cm); draw(unitcircle);' -F svg -o circle.svg
+```
+
+Supported formats: **svg** (default), **pdf**, **png**. The script is pure stdlib (Python 3.10+, no pip install). It reads source from `-f <file>`, `-s <string>`, or stdin (in that order); output goes to `-o <path>` (`-o -` for raw bytes on stdout).
+
+**Credentials:** The script needs `ASY_API_KEY` (env var or `--api-key`). `ASY_BASE_URL` has a built-in default and rarely needs overriding. **If the script exits with code 2 and reports "missing API key", ask the user for the key** — do not silently fail. Auth failures (HTTP 403, exit 4) likewise mean the key is wrong or expired; surface the full stderr report (it includes the compiler output on 422 errors) so the user can diagnose.
+
+**Error reporting:** The script writes a structured multi-line report to stderr on any failure — HTTP status, server error code, the `x-fn-trace-id`, and (for compile errors) the full Asymptote compiler output with line/column. Always relay this report verbatim to the user when something goes wrong; it is the fastest path to fixing broken source.
+
+### Format Guidance
+
+| Use case | Recommended format | Notes |
+|----------|-------------------|-------|
+| Visual preview / feedback loop | **png** | Raster, inspectable inline; local path needs ImageMagick, network path supports it natively |
+| Final vector deliverable (web) | **svg** | Scalable, browser-friendly |
+| Final deliverable (print / PDF) | **pdf** | Asy default; best for documents |
+| EPS (PostScript workflows) | **eps** | Local path only — `asy_render.py` does not support eps |
 
 ## Important Conventions
 
@@ -316,9 +354,9 @@ path resistorSymbol(pair start, pair end, real width=0.3, int zigzags=5) {
 
 If the execution environment supports image viewing, use an iterative visual feedback loop to refine the output:
 
-1. **Generate a preview**: Compile with `asy -f png file.asy` (requires ImageMagick) to produce a raster image that can be inspected immediately.
+1. **Generate a preview**: Render to **png** via the chosen path — locally `asy -f png -o preview.png file.asy` (requires ImageMagick), or over the network `python3 scripts/asy_render.py -f file.asy -F png -o preview.png`. PNG is inspectable immediately.
 2. **Inspect visually**: Evaluate proportions, alignment, color balance, label placement, and whitespace directly from the rendered image.
 3. **Adjust code**: Tweak coordinates, pens, sizes, or transforms based on what you see, then regenerate.
-4. **Final export**: Once the visual result is satisfactory, export to the desired final format (usually PDF or SVG).
+4. **Final export**: Once the visual result is satisfactory, re-render to the desired final format (usually **svg** or **pdf**).
 
 This loop is especially valuable for complex multi-layer compositions where purely analytical coordinate calculations are not enough to guarantee a clean layout.

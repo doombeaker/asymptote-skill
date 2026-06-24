@@ -823,11 +823,15 @@ unitsize(1cm);                     // 1 user unit = 1 cm
 
 ### Output Formats
 
+Source is rendered to an image file by the skill via one of two paths (see `SKILL.md` → "Rendering" for selection logic):
+
 ```asy
-// Command line:
-// asy -f pdf file.asy    (default)
-// asy -f svg file.asy
-// asy -f png file.asy    (requires ImageMagick)
+// Path A — local compilation (when `asy` is available):
+// asy -f pdf file.asy    (default; also svg, eps; png needs ImageMagick)
+// asy -f svg -o out.svg file.asy
+
+// Path B — network rendering (fallback, scripts/asy_render.py):
+// python3 scripts/asy_render.py -f file.asy -F svg -o out.svg   (svg|pdf|png)
 ```
 
 ---

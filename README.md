@@ -27,6 +27,8 @@ Asymptote is a powerful descriptive vector graphics language that provides a mat
 │   └── 05-skillutils-reference.md # Skillutils API reference
 ├── lib/                  # Shared Asymptote libraries (part of the skill)
 │   └── skillutils.asy    # Reusable library: label_box_pic, label_rounded_pic, roundbox, pics_bbox, pics_cluster
+├── scripts/              # Tooling for the skill
+│   └── asy_render.py     # Network rendering client (renders .asy via a remote asyagent service when local asy is unavailable)
 ├── templates/            # Ready-to-use Asymptote templates
 │   ├── geometric_*.asy   # 2D geometric drawing templates
 │   ├── scientific_*.asy  # Scientific graph templates
@@ -131,11 +133,12 @@ This skill enforces the following principles for all generated code:
 
 ## Output Formats
 
-Asymptote supports multiple output formats:
-- **PDF** (default): `asy -f pdf file.asy`
-- **EPS/PS**: `asy file.asy`
-- **SVG**: `asy -f svg file.asy`
-- **PNG/JPG** (via ImageMagick): `asy -f png file.asy`
+The skill renders `.asy` source to images via two paths (see `SKILL.md` for the full selection logic):
+
+- **Local compilation** (default when `asy` is on PATH): `asy -f pdf|svg|eps file.asy`; PNG/JPG requires ImageMagick.
+- **Network rendering** (`scripts/asy_render.py`, fallback): supports **svg** (default), **pdf**, **png** — needs `ASY_API_KEY` (env var or `--api-key`).
+
+Common formats: **PDF** (asy default), **SVG** (web), **PNG** (preview/feedback). EPS is local-only.
 
 ## License
 
